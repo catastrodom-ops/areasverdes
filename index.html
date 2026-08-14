@@ -879,16 +879,16 @@ async function loadGeoJSON() {
   const progressBar = document.getElementById('loadProgressBar');
   try {
     loadAttempts++;
-    document.getElementById('loadMsg').innerHTML = `Cargando catastro de áreas verdes desde <b>av2.json</b>… (intento ${loadAttempts})`;
+    document.getElementById('loadMsg').innerHTML = `Cargando catastro de áreas verdes desde <b>av3.geojson</b>… (intento ${loadAttempts})`;
     progressBar.style.width = '30%';
     
     let res;
     try {
-      res = await fetch('data/av2.json');
+     res = await fetch('data/av3.geojson.json');  // ✅ CORRECTO;
     } catch (e) {}
     
     if (!res || !res.ok) {
-      res = await fetch('av2.json');
+      res = await fetch('data/av3.geojson.json');  // ✅ CORRECTO;
     }
     
     progressBar.style.width = '60%';
@@ -944,7 +944,7 @@ function showError(msg) {
       <div style="font-weight:700;color:var(--color-primary);margin-bottom:6px;font-size:16px;">❌ Error</div>
       ${msg}
       <div style="margin-top:8px;font-size:11px;color:var(--color-text-secondary);">
-        Asegúrate de que el archivo <b>av2.json</b> esté en la carpeta <b>data/</b>
+        Asegúrate de que el archivo <b>av3.geojson</b> esté en la carpeta <b>data/</b>
       </div>
       <button class="btn-retry" onclick="location.reload()">🔄 Reintentar</button>
     </div>
