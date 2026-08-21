@@ -9,8 +9,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
+    /* ===== ESTILOS (igual que antes) ===== */
     :root {
-      /* Nueva paleta */
       --color-primary: #d6001c;
       --color-surface: #f9f9ff;
       --color-container: #ffffff;
@@ -19,19 +19,6 @@
       --color-text-secondary: #4a4b54;
       --color-border: #d5daeb;
       --color-shadow: rgba(0, 0, 0, 0.06);
-      
-      /* Mantenemos algunas variables verdes para los datos */
-      --verde-claro: #2e7d32;
-      --verde-medio: #1b5e20;
-      --verde-oscuro: #0d3b0f;
-      --verde-musgo: #4caf50;
-      --verde-aguacate: #66bb6a;
-      --verde-vivo: #388e3c;
-      --amarillo-vivo: #CDDC39;
-      --naranja-vivo: #FF9800;
-      --rojo-vivo: #d6001c;
-      --azul-vivo: #42A5F5;
-      
       --font-display: 'Montserrat', sans-serif;
       --font-body: 'Montserrat', sans-serif;
       --font-mono: 'Montserrat', 'SF Mono', monospace;
@@ -265,8 +252,8 @@
     }
 
     .legend-vertical {
-      width: 240px;
-      min-width: 240px;
+      width: 260px;
+      min-width: 260px;
       background: var(--color-container-alt);
       padding: 16px 18px;
       display: flex;
@@ -318,6 +305,19 @@
       font-size: 14px;
       width: 22px;
       text-align: center;
+    }
+    .legend-vertical .capa-checkbox {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--color-primary);
+      cursor: pointer;
+    }
+    .legend-vertical .capa-color {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      border: 1px solid var(--color-border);
+      flex-shrink: 0;
     }
 
     .charts-grid {
@@ -403,6 +403,20 @@
       font-weight: 600; 
     }
     .insight .stat { color: var(--color-primary); font-weight: 700; }
+
+    .capa-indicador {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin-left: 6px;
+    }
+    .capa-indicador.areas_verdes { background: #e8f5e9; color: #1b5e20; }
+    .capa-indicador.parques { background: #ffebee; color: #b71c1c; }
+    .capa-indicador.mixto { background: #e3f2fd; color: #0d47a1; }
 
     footer {
       margin-top: 20px; 
@@ -572,15 +586,15 @@
 
   <header>
     <p class="eyebrow">Catastro de áreas verdes · Rancagua</p>
-    <h1>Áreas <em>Verdes</em></h1>
+    <h1>Áreas <em>Verdes</em> + <em style="color:#d6001c;">Parques</em></h1>
     <p class="subtitle">
-      Distribución de áreas verdes en la comuna de Rancagua — cada polígono contiene información sobre 
-      <b>accesibilidad, equipamiento, luminaria, cobertura vegetal</b> y más.
+      Distribución de áreas verdes y parques en la comuna de Rancagua.
+      <span id="filtroInfo" style="display:inline-block;margin-top:6px;"></span>
     </p>
   </header>
 
   <div class="kpis" id="kpis">
-    <div class="kpi"><div class="label">🌳 Áreas verdes</div><div class="value" id="kpiTotal">0</div><div class="sub">total registradas</div></div>
+    <div class="kpi"><div class="label">🗺️ Total elementos</div><div class="value" id="kpiTotal">0</div><div class="sub" id="kpiTotalSub">todas las capas</div></div>
     <div class="kpi highlight"><div class="label">🧩 Con juegos</div><div class="value" id="kpiJuegos">0</div><div class="sub">Juegos infantiles</div></div>
     <div class="kpi success"><div class="label">🏋️ Con máquinas</div><div class="value" id="kpiMaquinas">0</div><div class="sub">Máquinas de ejercicio</div></div>
     <div class="kpi accent"><div class="label">♿ Accesibles</div><div class="value" id="kpiAccesibilidad">0</div><div class="sub">Accesibilidad universal</div></div>
@@ -591,15 +605,21 @@
   <div class="grid">
     <div class="panel">
       <div class="panel-head">
-        <h2>Mapa de Áreas Verdes</h2>
-        <span class="count" id="mapCount">0 áreas</span>
+        <h2>Mapa de Áreas Verdes y Parques</h2>
+        <span class="count" id="mapCount">0 elementos</span>
       </div>
       
       <div class="map-wrapper">
         <div id="map" class="leaflet-container"></div>
         
         <div class="legend-vertical" id="legend">
-          <div class="legend-title">🌿 Atributos</div>
+          <div class="legend-title">🗺️ Capas</div>
+          
+          <div class="legend-section" id="legendCapas">
+            <!-- Las capas se generan dinámicamente -->
+          </div>
+          
+          <hr class="legend-divider">
           
           <div class="legend-section">
             <div class="legend-label">✅ Sí · ❌ No</div>
@@ -628,14 +648,14 @@
           <hr class="legend-divider">
           
           <div class="legend-section" style="text-align:center;">
-            <div style="font-size:16px;font-weight:700;color:var(--color-primary);"><span id="legendTotal">0</span> áreas</div>
+            <div style="font-size:16px;font-weight:700;color:var(--color-primary);"><span id="legendTotal">0</span> elementos</div>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- GRÁFICOS DE INFRAESTRUCTURA Y ESTADO -->
+  <!-- GRÁFICOS -->
   <div class="charts-grid">
     <div class="chart-box">
       <div class="chart-title">🧩 Juegos infantiles</div>
@@ -720,7 +740,7 @@
     </div>
     <div class="insight">
       <h3>🏋️ Máquinas de ejercicio</h3>
-      <p><span class="stat" id="insightMaquinas">0</span> áreas tienen máquinas de ejercicio (<span id="insightMaquinasPct">0%</span>)</p>
+      <p><span class="stat" id="insightMaquinas">0</span> áreas tienen máquinas de ejercicio (<span id="insightMaquinasPct">0%</span>)</p>🏞️
     </div>
     <div class="insight">
       <h3>♿ Accesibilidad universal</h3>
@@ -741,17 +761,17 @@
 
 <div id="loadOverlay">
   <div class="spinner" id="loadSpinner"></div>
-  <div id="loadMsg">Cargando catastro de áreas verdes desde <b>av2.json</b>…</div>
+  <div id="loadMsg">Cargando capas...</div>
   <div class="load-progress">
     <div class="load-progress-bar" id="loadProgressBar"></div>
   </div>
   <div id="loadErr"></div>
   <div id="dropZone" style="display:none;">
     <div id="dropInner">
-      <div class="drop-title">⚠️ Archivo no encontrado</div>
+      <div class="drop-title">⚠️ Archivos no encontrados</div>
       <div class="drop-text">
-        No se encontró el archivo <b>data/av2.json</b><br />
-        Selecciona el archivo manualmente.
+        No se encontraron los archivos.<br />
+        Selecciona un archivo manualmente.
       </div>
       <button id="pickBtn">Seleccionar archivo</button>
       <input type="file" id="fileInput" accept=".geojson,.json" style="display:none;" />
@@ -764,16 +784,57 @@
 
 <script>
 // ============================================================
-//  VISOR DE ÁREAS VERDES - COBERTURA CON 0% INCLUIDO
+//  CONFIGURACIÓN DE CAPAS
 // ============================================================
 
-let features = [];
+const CAPAS_CONFIG = {
+  'areas_verdes': {
+    urls: ['data/av3.geojson.json'],
+    nombre: 'Áreas Verdes',
+    icono: '🌳',
+    color: '#4caf50',
+    fillColor: '#4caf50',
+    visible: true,
+    estilo: {
+      color: '#4caf50',
+      weight: 2,
+      opacity: 0.8,
+      fillOpacity: 0.5
+    }
+  },
+  'parques': {
+    urls: ['data/Parques.geojson.json'],
+    nombre: 'Parques',
+    icono: '🏞️',
+    color: '#d6001c',
+    fillColor: '#ff6b6b',
+    visible: true,
+    estilo: {
+      color: '#ff6b6b',
+      weight: 3,
+      opacity: 0.8,
+      fillOpacity: 0.3,
+      dashArray: '5, 5'
+    }
+  }
+};
+
+// ============================================================
+//  VARIABLES GLOBALES
+// ============================================================
+
+let capas = {};
+let capasLayer = {};
 let map = null;
-let geoLayer = null;
+let mapInitialized = false;
 let charts = {};
 let loadAttempts = 0;
-let mapInitialized = false;
 const MAX_LOAD_ATTEMPTS = 3;
+let capasActivas = new Set();
+
+// ============================================================
+//  FUNCIONES AUXILIARES
+// ============================================================
 
 function fmt(n) { 
   if (n === undefined || n === null) return '0';
@@ -859,50 +920,100 @@ function hasValidCoordinates(geometry) {
   }
 }
 
-const tipoColores = {
-  'Parque': { fill: '#2e7d32', border: '#1b5e20' },
-  'Plaza': { fill: '#66bb6a', border: '#388e3c' },
-  'Área Verde': { fill: '#4caf50', border: '#2e7d32' },
-  'Jardín': { fill: '#81c784', border: '#4caf50' },
-  'Otro': { fill: '#a5d6a7', border: '#66bb6a' }
-};
-
-function getTipoColor(tipo) {
-  const t = (tipo || 'Otro').toLowerCase();
-  for (const [key, data] of Object.entries(tipoColores)) {
-    if (key.toLowerCase() === t) return data;
+function getFeaturesFiltradas() {
+  let all = [];
+  for (const [key, capa] of Object.entries(capas)) {
+    if (capasActivas.has(key) && capa.features) {
+      all = all.concat(capa.features);
+    }
   }
-  return tipoColores['Otro'];
+  return all;
 }
 
-async function loadGeoJSON() {
+function getNombreCapasActivas() {
+  const nombres = [];
+  for (const key of capasActivas) {
+    if (capas[key]) {
+      nombres.push(capas[key].config.icono + ' ' + capas[key].config.nombre);
+    }
+  }
+  return nombres.join(' + ') || 'Ninguna';
+}
+
+// ============================================================
+//  CARGA DE MÚLTIPLES CAPAS
+// ============================================================
+
+async function cargarTodasLasCapas() {
   const progressBar = document.getElementById('loadProgressBar');
+  const totalCapas = Object.keys(CAPAS_CONFIG).length;
+  let cargadas = 0;
+  
   try {
     loadAttempts++;
-    document.getElementById('loadMsg').innerHTML = `Cargando catastro de áreas verdes desde <b>av2.json</b>… (intento ${loadAttempts})`;
-    progressBar.style.width = '30%';
+    document.getElementById('loadMsg').innerHTML = `Cargando capas... (intento ${loadAttempts})`;
+    progressBar.style.width = '10%';
     
-    let res;
-    try {
-     res = await fetch('data/av3.geojson.json');  // ✅ CORRECTO;
-    } catch (e) {}
-    
-    if (!res || !res.ok) {
-      res = await fetch('data/av3.geojson.json');  // ✅ CORRECTO;
+    for (const [key, config] of Object.entries(CAPAS_CONFIG)) {
+      let data = null;
+      let loaded = false;
+      
+      for (const url of config.urls) {
+        try {
+          document.getElementById('loadMsg').innerHTML = 
+            `Cargando ${config.icono} ${config.nombre}... (${cargadas + 1}/${totalCapas})`;
+          
+          const res = await fetch(url).catch(() => null);
+          if (res && res.ok) {
+            data = await res.json();
+            loaded = true;
+            console.log(`✅ ${config.icono} ${config.nombre} cargado desde ${url}`);
+            break;
+          }
+        } catch (err) {
+          console.log(`⚠️ No se pudo cargar ${config.nombre} desde ${url}`);
+        }
+      }
+      
+      if (loaded && data) {
+        capas[key] = {
+          data: data,
+          config: config,
+          features: data.features || []
+        };
+        console.log(`📊 ${config.icono} ${config.nombre}: ${capas[key].features.length} elementos`);
+        if (config.visible !== false) {
+          capasActivas.add(key);
+        }
+      } else {
+        console.warn(`❌ No se pudo cargar ${config.nombre}`);
+        capas[key] = {
+          data: null,
+          config: config,
+          features: []
+        };
+      }
+      
+      cargadas++;
+      const progreso = Math.round((cargadas / totalCapas) * 90);
+      progressBar.style.width = `${10 + progreso}%`;
     }
     
-    progressBar.style.width = '60%';
-    if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-    const data = await res.json();
-    progressBar.style.width = '90%';
-    processData(data);
+    const cargadasExitosas = Object.values(capas).filter(c => c.features.length > 0).length;
+    document.getElementById('loadMsg').innerHTML = `✅ ${cargadasExitosas}/${totalCapas} capas cargadas`;
     progressBar.style.width = '100%';
+    
+    setTimeout(() => {
+      document.getElementById('loadOverlay').style.display = 'none';
+      document.getElementById('appWrap').style.display = 'block';
+      inicializarAppConCapas();
+    }, 500);
+    
   } catch (err) {
-    progressBar.style.width = '100%';
-    console.error('Error al cargar:', err);
+    console.error('Error al cargar capas:', err);
     if (loadAttempts < MAX_LOAD_ATTEMPTS) {
       document.getElementById('loadMsg').innerHTML = `⚠️ Error. Reintentando (${loadAttempts}/${MAX_LOAD_ATTEMPTS})…`;
-      setTimeout(() => loadGeoJSON(), 2000);
+      setTimeout(() => cargarTodasLasCapas(), 2000);
     } else {
       document.getElementById('loadSpinner').style.display = 'none';
       document.getElementById('loadMsg').style.display = 'none';
@@ -910,45 +1021,6 @@ async function loadGeoJSON() {
       setupManualLoad();
     }
   }
-}
-
-function processData(geojson) {
-  if (!geojson.features || geojson.features.length === 0) {
-    showError('El GeoJSON no contiene features.');
-    return;
-  }
-  
-  const validFeatures = geojson.features.filter(f => {
-    return hasValidCoordinates(f.geometry);
-  });
-  
-  console.log(`📊 Total features: ${geojson.features.length}, Válidas: ${validFeatures.length}`);
-  
-  if (validFeatures.length === 0) {
-    showError('Ninguna de las features tiene geometrías válidas.');
-    return;
-  }
-  
-  features = validFeatures;
-  
-  document.getElementById('loadOverlay').style.display = 'none';
-  document.getElementById('appWrap').style.display = 'block';
-  initApp();
-}
-
-function showError(msg) {
-  document.getElementById('loadSpinner').style.display = 'none';
-  document.getElementById('loadMsg').style.display = 'none';
-  document.getElementById('loadErr').innerHTML = `
-    <div class="errbox">
-      <div style="font-weight:700;color:var(--color-primary);margin-bottom:6px;font-size:16px;">❌ Error</div>
-      ${msg}
-      <div style="margin-top:8px;font-size:11px;color:var(--color-text-secondary);">
-        Asegúrate de que el archivo <b>av3.geojson</b> esté en la carpeta <b>data/</b>
-      </div>
-      <button class="btn-retry" onclick="location.reload()">🔄 Reintentar</button>
-    </div>
-  `;
 }
 
 function setupManualLoad() {
@@ -975,25 +1047,70 @@ function handleManualFile(file) {
   reader.onload = () => {
     try {
       const data = JSON.parse(reader.result);
-      processData(data);
+      let assigned = false;
+      for (const [key, capa] of Object.entries(capas)) {
+        if (!capa.data) {
+          capas[key] = {
+            data: data,
+            config: capa.config,
+            features: data.features || []
+          };
+          capasActivas.add(key);
+          assigned = true;
+          break;
+        }
+      }
+      if (!assigned) {
+        capas['manual'] = {
+          data: data,
+          config: {
+            nombre: 'Manual',
+            icono: '📁',
+            color: '#666',
+            fillColor: '#999',
+            estilo: { color: '#666', weight: 2, opacity: 0.8, fillOpacity: 0.4 }
+          },
+          features: data.features || []
+        };
+        capasActivas.add('manual');
+      }
+      document.getElementById('loadOverlay').style.display = 'none';
+      document.getElementById('appWrap').style.display = 'block';
+      inicializarAppConCapas();
     } catch (err) {
-      showError('El archivo no es un GeoJSON válido: ' + err.message);
+      document.getElementById('loadErr').innerHTML = `
+        <div class="errbox">
+          <div style="font-weight:700;color:var(--color-primary);margin-bottom:6px;font-size:16px;">❌ Error</div>
+          El archivo no es un GeoJSON válido: ${err.message}
+          <button class="btn-retry" onclick="location.reload()">🔄 Reintentar</button>
+        </div>
+      `;
     }
   };
-  reader.onerror = () => showError('No se pudo leer el archivo.');
+  reader.onerror = () => {
+    document.getElementById('loadErr').innerHTML = `
+      <div class="errbox">
+        <div style="font-weight:700;color:var(--color-primary);margin-bottom:6px;font-size:16px;">❌ Error</div>
+        No se pudo leer el archivo.
+        <button class="btn-retry" onclick="location.reload()">🔄 Reintentar</button>
+      </div>
+    `;
+  };
   reader.readAsText(file);
 }
 
-function initApp() {
-  console.log('🚀 Iniciando aplicación con', features.length, 'áreas');
-  
-  document.getElementById('footTotal').textContent = fmt(features.length) + ' áreas verdes';
+// ============================================================
+//  INICIALIZAR CON MÚLTIPLES CAPAS
+// ============================================================
 
+function inicializarAppConCapas() {
+  console.log('🚀 Inicializando aplicación con', Object.keys(capas).length, 'capas');
+  
   if (!mapInitialized) {
     map = L.map('map', { scrollWheelZoom: true, preferCanvas: true });
     mapInitialized = true;
     
-    const CartoDB_DarkMatter = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    const CartoDB = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
       subdomains: 'abcd',
       minZoom: 4,
@@ -1007,17 +1124,138 @@ function initApp() {
       attribution: '&copy; Google'
     });
     
-    const baseMaps = { 'Carto': CartoDB_DarkMatter, 'Google': GoogleSat };
-    const layerControl = L.control.layers(baseMaps, null, { position: 'topright', collapsed: false }).addTo(map);
-    
-    const container = layerControl.getContainer();
-    const title = document.createElement('div');
-    title.innerHTML = '<strong style="display:block; padding:4px 8px; font-family: var(--font-mono); font-size: 12px; color: var(--color-text-secondary); border-bottom: 1px solid var(--color-border); margin-bottom: 4px;">Mapas base</strong>';
-    container.prepend(title);
+    const baseMaps = { 'Carto': CartoDB, 'Google Sat': GoogleSat };
+    L.control.layers(baseMaps, null, { position: 'topright', collapsed: false }).addTo(map);
   }
+  
+  for (const [key, capa] of Object.entries(capas)) {
+    const group = L.layerGroup();
+    capasLayer[key] = group;
+    
+    if (capa.features && capa.features.length > 0) {
+      renderizarCapa(key, capa, group);
+      if (capasActivas.has(key)) {
+        group.addTo(map);
+      }
+    }
+  }
+  
+  configurarChartJS();
+  actualizarTodosLosIndicadores();
+  actualizarLeyendaCapas();
+  actualizarLeyendaAtributos();
+  actualizarInfoFiltro();
+  ajustarVistaMapa();
+  
+  setTimeout(() => {
+    map.invalidateSize();
+  }, 300);
+}
 
-  geoLayer = L.layerGroup().addTo(map);
+// ============================================================
+//  RENDERIZAR CADA CAPA - CON ICONOS EN POPUPS
+// ============================================================
 
+function renderizarCapa(key, capa, group) {
+  const { features, config } = capa;
+  
+  // Mapeo de atributos a iconos y etiquetas amigables
+  const MAPA_ATRIBUTOS = {
+    'Juegos_inf': { icono: '🧩', label: 'Juegos infantiles' },
+    'Máquinas': { icono: '🏋️', label: 'Máquinas de ejercicio' },
+    'Accesibili': { icono: '♿', label: 'Accesibilidad universal' },
+    'Alumbrado': { icono: '💡', label: 'Alumbrado público' },
+    'Estacionam': { icono: '🅿️', label: 'Estacionamientos' },
+    'Mobiliario': { icono: '🪑', label: 'Mobiliario urbano' },
+    'Luminaria': { icono: '💡', label: 'Tipo de luminaria' },
+    'Cobertura': { icono: '🌳', label: 'Cobertura vegetal' },
+    'Cobertur_1': { icono: '🌳', label: 'Cobertura vegetal' },
+    'Cobertura_1': { icono: '🌳', label: 'Cobertura vegetal' },
+    'TIPO': { icono: '🏷️', label: 'Tipo' },
+    'USO': { icono: '🏷️', label: 'Uso' },
+    'Localizaci': { icono: '📍', label: 'Localización' },
+    'Observacio': { icono: '📝', label: 'Observaciones' },
+    'OBS': { icono: '📝', label: 'Observaciones' },
+    'Estado_del': { icono: '📊', label: 'Estado' },
+    'SUP_M2': { icono: '📐', label: 'Superficie (m²)' }
+  };
+  
+  features.forEach(f => {
+    if (!hasValidCoordinates(f.geometry)) return;
+    
+    const layer = L.geoJSON(f, {
+      style: config.estilo,
+      onEachFeature: function(feat, layer) {
+        const props = feat.properties;
+        const nombre = props.Nombre_1 || props.IDENTIFICA || props.nombre || props.NOMBRE || 'Sin nombre';
+        
+        let propRows = '';
+        const excludeKeys = ['Nombre_1', 'IDENTIFICA', 'nombre', 'NOMBRE', 'geometry', 'OBJECTID', 'CDT', 'ZONA_PROP', 'ZONA_PRC', 'ID_TEMA', 'TEMA', 'SIT_IPT', 'SUB_TEMA', 'PLANO__VER', 'PRC_M23', 'N°', 'Marca_temp', 'Shape_Length', 'Shape_Area'];
+        
+        // Campos prioritarios en orden
+        const camposPrioritarios = ['TIPO', 'USO', 'Localizaci', 'Juegos_inf', 'Máquinas', 'Accesibili', 'Alumbrado', 'Estacionam', 'Mobiliario', 'Luminaria', 'Cobertura', 'Cobertur_1', 'Cobertura_1', 'Observacio', 'OBS', 'Estado_del', 'SUP_M2'];
+        
+        camposPrioritarios.forEach(key => {
+          if (props[key] !== undefined && props[key] !== null && props[key] !== '' && props[key] !== ' ') {
+            const valor = props[key];
+            const info = MAPA_ATRIBUTOS[key] || { icono: '📌', label: key };
+            let display = valor;
+            
+            if (typeof valor === 'string') {
+              const lower = valor.toLowerCase();
+              if (lower === 'si' || lower === 'sí' || lower === 'true' || lower === '1' || lower === 'yes' || lower === 'x') {
+                display = '✅ Sí';
+              } else if (lower === 'no' || lower === 'false' || lower === '0') {
+                display = '❌ No';
+              } else if (lower === 'sin dato' || lower === '') {
+                display = '—';
+              }
+            }
+            
+            if (key === 'Cobertura' || key === 'Cobertur_1' || key === 'Cobertura_1') {
+              const coberturaNum = parseCobertura(valor);
+              display = `${coberturaNum}% (${valor})`;
+            }
+            
+            propRows += `<div class="pop-row"><b>${info.icono} ${info.label}</b><span>${display}</span></div>`;
+          }
+        });
+        
+        // Resto de propiedades
+        Object.entries(props)
+          .filter(([k]) => !excludeKeys.includes(k) && !camposPrioritarios.includes(k))
+          .filter(([k, v]) => v !== undefined && v !== null && v !== '' && v !== ' ')
+          .forEach(([k, v]) => {
+            const info = MAPA_ATRIBUTOS[k] || { icono: '📌', label: k };
+            let display = v;
+            if (typeof v === 'string') {
+              const lower = v.toLowerCase();
+              if (lower === 'si' || lower === 'sí' || lower === 'true' || lower === '1' || lower === 'yes' || lower === 'x') {
+                display = '✅ Sí';
+              } else if (lower === 'no' || lower === 'false' || lower === '0') {
+                display = '❌ No';
+              }
+            }
+            propRows += `<div class="pop-row"><b>${info.icono} ${info.label}</b><span>${display}</span></div>`;
+          });
+        
+        layer.bindPopup(`
+          <div class="pop-title" style="color:${config.color}">${config.icono} ${nombre}</div>
+          <div class="pop-row"><b>📂 Capa</b><span>${config.nombre}</span></div>
+          ${propRows}
+        `);
+      }
+    });
+    
+    group.addLayer(layer);
+  });
+}
+
+// ============================================================
+//  CONFIGURAR CHART.JS
+// ============================================================
+
+function configurarChartJS() {
   Chart.defaults.font.family = "'Montserrat', sans-serif";
   Chart.defaults.color = '#4a4b54';
   Chart.defaults.font.size = 10;
@@ -1043,12 +1281,12 @@ function initApp() {
   };
 
   const campos = [
-    { id: 'chartJuegos', key: 'Juegos_inf', label: 'Juegos', colorSi: '#2e7d32', colorNo: '#b0b5c7', statSi: 'statJuegosSi', statNo: 'statJuegosNo' },
-    { id: 'chartMaquinas', key: 'Máquinas', label: 'Máquinas', colorSi: '#d6001c', colorNo: '#b0b5c7', statSi: 'statMaquinasSi', statNo: 'statMaquinasNo' },
-    { id: 'chartAccesibilidad', key: 'Accesibili', label: 'Accesibilidad', colorSi: '#42a5f5', colorNo: '#b0b5c7', statSi: 'statAccesibilidadSi', statNo: 'statAccesibilidadNo' },
-    { id: 'chartAlumbrado', key: 'Alumbrado', label: 'Alumbrado', colorSi: '#ff8f00', colorNo: '#b0b5c7', statSi: 'statAlumbradoSi', statNo: 'statAlumbradoNo' },
-    { id: 'chartEstacionamientos', key: 'Estacionam', label: 'Estacionamientos', colorSi: '#6a1b9a', colorNo: '#b0b5c7', statSi: 'statEstacionamientosSi', statNo: 'statEstacionamientosNo' },
-    { id: 'chartMobiliario', key: 'Mobiliario', label: 'Mobiliario', colorSi: '#00838f', colorNo: '#b0b5c7', statSi: 'statMobiliarioSi', statNo: 'statMobiliarioNo' }
+    { id: 'chartJuegos', key: 'Juegos_inf', colorSi: '#2e7d32', colorNo: '#b0b5c7', statSi: 'statJuegosSi', statNo: 'statJuegosNo' },
+    { id: 'chartMaquinas', key: 'Máquinas', colorSi: '#d6001c', colorNo: '#b0b5c7', statSi: 'statMaquinasSi', statNo: 'statMaquinasNo' },
+    { id: 'chartAccesibilidad', key: 'Accesibili', colorSi: '#42a5f5', colorNo: '#b0b5c7', statSi: 'statAccesibilidadSi', statNo: 'statAccesibilidadNo' },
+    { id: 'chartAlumbrado', key: 'Alumbrado', colorSi: '#ff8f00', colorNo: '#b0b5c7', statSi: 'statAlumbradoSi', statNo: 'statAlumbradoNo' },
+    { id: 'chartEstacionamientos', key: 'Estacionam', colorSi: '#6a1b9a', colorNo: '#b0b5c7', statSi: 'statEstacionamientosSi', statNo: 'statEstacionamientosNo' },
+    { id: 'chartMobiliario', key: 'Mobiliario', colorSi: '#00838f', colorNo: '#b0b5c7', statSi: 'statMobiliarioSi', statNo: 'statMobiliarioNo' }
   ];
 
   campos.forEach(campo => {
@@ -1071,7 +1309,6 @@ function initApp() {
     }
   });
 
-  // Gráfico de Luminaria
   const ctxLuminaria = document.getElementById('chartLuminaria').getContext('2d');
   charts['chartLuminaria'] = new Chart(ctxLuminaria, {
     type: 'doughnut',
@@ -1096,9 +1333,6 @@ function initApp() {
     }
   });
 
-  // ============================================================
-  // GRÁFICO DE COBERTURA - INCLUYE 0% COMO CATEGORÍA SEPARADA
-  // ============================================================
   const ctxCobertura = document.getElementById('chartCobertura').getContext('2d');
   charts['chartCobertura'] = new Chart(ctxCobertura, {
     type: 'bar',
@@ -1139,111 +1373,25 @@ function initApp() {
       }
     }
   });
-
-  updateMap(features);
-  updateKPIs(features);
-  updateCharts(features);
-  updateInsights(features);
-  updateLegend(features);
-  
-  setTimeout(() => {
-    updateCharts(features);
-    map.invalidateSize();
-  }, 500);
 }
 
-function updateMap(data) {
-  if (!geoLayer) return;
-  geoLayer.clearLayers();
+// ============================================================
+//  ACTUALIZAR INDICADORES
+// ============================================================
 
-  const tiposUnicos = [...new Set(data.map(f => f.properties.TIPO || f.properties.USO || 'Otro'))];
-  const styleMap = {};
-  tiposUnicos.forEach(tipo => {
-    const colors = getTipoColor(tipo);
-    styleMap[tipo] = {
-      color: colors.border,
-      weight: 2,
-      opacity: 0.9,
-      fillColor: colors.fill,
-      fillOpacity: 0.5
-    };
-  });
-
-  let validFeatures = 0;
-  data.forEach(f => {
-    if (!hasValidCoordinates(f.geometry)) return;
-    
-    const p = f.properties;
-    const tipo = p.TIPO || p.USO || 'Otro';
-    const style = styleMap[tipo] || styleMap['Otro'];
-    
-    try {
-      const layer = L.geoJSON(f, {
-        style: style,
-        onEachFeature: function(feat, layer) {
-          const nombre = p.Nombre_1 || p.IDENTIFICA || 'Sin nombre';
-          const localizacion = p.Localizaci || 'Sin localización';
-          const juegos = parseSiNo(p.Juegos_inf);
-          const maquinas = parseSiNo(p.Máquinas);
-          const accesibilidad = parseSiNo(p.Accesibili);
-          const alumbrado = parseSiNo(p.Alumbrado);
-          const estacionamientos = parseSiNo(p.Estacionam);
-          const mobiliario = parseSiNo(p.Mobiliario);
-          const luminaria = p.Luminaria || 'Sin dato';
-          const coberturaRaw = p.Cobertur_1 || p.Cobertura || p.Cobertura_1 || '';
-          const cobertura = parseCobertura(coberturaRaw);
-          const coberturaRango = coberturaRaw || 'Sin dato';
-          const observaciones = p.Observac_1 || '';
-
-          layer.bindPopup(`
-            <div class="pop-title">${nombre}</div>
-            <div class="pop-row"><b>Tipo</b><span>${tipo}</span></div>
-            <div class="pop-row"><b>Localización</b><span style="font-size:11px;">${localizacion}</span></div>
-            <div class="pop-row"><b>🧩 Juegos infantiles</b><span class="${juegos ? 'si' : 'no'}">${juegos ? '✅ Sí' : '❌ No'}</span></div>
-            <div class="pop-row"><b>🏋️ Máquinas de ejercicio</b><span class="${maquinas ? 'si' : 'no'}">${maquinas ? '✅ Sí' : '❌ No'}</span></div>
-            <div class="pop-row"><b>♿ Accesibilidad universal</b><span class="${accesibilidad ? 'si' : 'no'}">${accesibilidad ? '✅ Sí' : '❌ No'}</span></div>
-            <div class="pop-row"><b>💡 Alumbrado público</b><span class="${alumbrado ? 'si' : 'no'}">${alumbrado ? '✅ Sí' : '❌ No'}</span></div>
-            <div class="pop-row"><b>🅿️ Estacionamientos</b><span class="${estacionamientos ? 'si' : 'no'}">${estacionamientos ? '✅ Sí' : '❌ No'}</span></div>
-            <div class="pop-row"><b>🪑 Mobiliario urbano</b><span class="${mobiliario ? 'si' : 'no'}">${mobiliario ? '✅ Sí' : '❌ No'}</span></div>
-            <div class="pop-row"><b>💡 Luminaria</b><span>${luminaria}</span></div>
-            <div class="pop-row"><b>🌳 Cobertura vegetal</b><span class="porcentaje">${cobertura}% (${coberturaRango})</span></div>
-            ${observaciones ? `<div class="pop-row"><b>📝 Observaciones</b><span style="font-size:11px;color:var(--color-text-secondary);">${observaciones}</span></div>` : ''}
-          `);
-        }
-      });
-      geoLayer.addLayer(layer);
-      validFeatures++;
-    } catch (e) {}
-  });
+function actualizarTodosLosIndicadores() {
+  const allFeatures = getFeaturesFiltradas();
+  const total = allFeatures.length;
   
-  document.getElementById('mapCount').textContent = fmt(validFeatures) + ' de ' + fmt(data.length) + ' áreas visibles';
-
-  if (validFeatures > 0) {
-    try {
-      const bounds = geoLayer.getBounds();
-      if (bounds.isValid()) {
-        map.fitBounds(bounds, { padding: [40, 40] });
-      }
-    } catch (e) {
-      map.setView([-34.17, -70.74], 13);
-    }
-  } else {
-    map.setView([-34.17, -70.74], 13);
-  }
-}
-
-function updateKPIs(data) {
-  const total = data.length;
-  const juegos = data.filter(f => parseSiNo(f.properties.Juegos_inf)).length;
-  const maquinas = data.filter(f => parseSiNo(f.properties.Máquinas)).length;
-  const accesibilidad = data.filter(f => parseSiNo(f.properties.Accesibili)).length;
-  const alumbrado = data.filter(f => parseSiNo(f.properties.Alumbrado)).length;
+  const juegos = allFeatures.filter(f => parseSiNo(f.properties.Juegos_inf)).length;
+  const maquinas = allFeatures.filter(f => parseSiNo(f.properties.Máquinas)).length;
+  const accesibilidad = allFeatures.filter(f => parseSiNo(f.properties.Accesibili)).length;
+  const alumbrado = allFeatures.filter(f => parseSiNo(f.properties.Alumbrado)).length;
   
-  const coberturas = data.map(f => {
+  const coberturas = allFeatures.map(f => {
     const raw = f.properties.Cobertur_1 || f.properties.Cobertura || f.properties.Cobertura_1 || '';
     return parseCobertura(raw);
   }).filter(v => v > 0);
-  
   const coberturaPromedio = coberturas.length > 0 ? Math.round(coberturas.reduce((s, v) => s + v, 0) / coberturas.length) : 0;
 
   document.getElementById('kpiTotal').textContent = fmt(total);
@@ -1252,44 +1400,56 @@ function updateKPIs(data) {
   document.getElementById('kpiAccesibilidad').textContent = fmt(accesibilidad);
   document.getElementById('kpiAlumbrado').textContent = fmt(alumbrado);
   document.getElementById('kpiCobertura').textContent = coberturaPromedio + '%';
+  
+  const capasTexto = getNombreCapasActivas();
+  document.getElementById('kpiTotalSub').textContent = capasTexto;
+  
+  document.getElementById('footTotal').textContent = fmt(total) + ' elementos · ' + capasTexto;
+  document.getElementById('mapCount').textContent = fmt(total) + ' elementos';
+  document.getElementById('legendTotal').textContent = fmt(total);
+
+  document.getElementById('insightJuegos').textContent = fmt(juegos);
+  document.getElementById('insightJuegosPct').textContent = pct(juegos, total);
+  document.getElementById('insightMaquinas').textContent = fmt(maquinas);
+  document.getElementById('insightMaquinasPct').textContent = pct(maquinas, total);
+  document.getElementById('insightAccesibilidad').textContent = fmt(accesibilidad);
+  document.getElementById('insightAccesibilidadPct').textContent = pct(accesibilidad, total);
+  document.getElementById('insightAlumbrado').textContent = fmt(alumbrado);
+  document.getElementById('insightAlumbradoPct').textContent = pct(alumbrado, total);
+
+  actualizarGraficos(allFeatures);
+  actualizarInfoFiltro();
 }
 
-function updateLegend(data) {
-  const luminarias = [...new Set(data.map(f => f.properties.Luminaria || 'Sin dato'))].filter(Boolean).sort();
-  const legendLum = document.getElementById('legendLuminaria');
-  if (luminarias.length > 0) {
-    legendLum.innerHTML = luminarias.map(l => `
-      <div class="legend-item">
-        <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${l.includes('LED') ? '#2e7d32' : l.includes('Convencional') ? '#d6001c' : l.includes('Fotovoltaica') ? '#ff8f00' : '#b0b5c7'};border:1px solid var(--color-border);"></span>
-        <span>${l}</span>
-      </div>
-    `).join('');
-  } else {
-    legendLum.innerHTML = '<div class="legend-item"><span>Sin datos</span></div>';
+function actualizarGraficos(allFeatures) {
+  const total = allFeatures.length;
+  if (total === 0) {
+    const campos = ['statJuegosSi', 'statJuegosNo', 'statMaquinasSi', 'statMaquinasNo', 
+                    'statAccesibilidadSi', 'statAccesibilidadNo', 'statAlumbradoSi', 'statAlumbradoNo',
+                    'statEstacionamientosSi', 'statEstacionamientosNo', 'statMobiliarioSi', 'statMobiliarioNo'];
+    campos.forEach(id => document.getElementById(id).textContent = '0');
+    document.getElementById('statCoberturaPromedio').textContent = '0%';
+    document.getElementById('statCoberturaCero').textContent = '0';
+    document.getElementById('statCoberturaConDato').textContent = '0';
+    
+    const chartIds = ['chartJuegos', 'chartMaquinas', 'chartAccesibilidad', 'chartAlumbrado', 'chartEstacionamientos', 'chartMobiliario'];
+    chartIds.forEach(id => {
+      if (charts[id]) {
+        charts[id].data.datasets[0].data = [0, 0];
+        charts[id].update();
+      }
+    });
+    if (charts['chartLuminaria']) {
+      charts['chartLuminaria'].data.labels = [];
+      charts['chartLuminaria'].data.datasets[0].data = [];
+      charts['chartLuminaria'].update();
+    }
+    if (charts['chartCobertura']) {
+      charts['chartCobertura'].data.datasets[0].data = [0, 0, 0, 0, 0, 0];
+      charts['chartCobertura'].update();
+    }
+    return;
   }
-
-  const coberturas = data.map(f => {
-    const raw = f.properties.Cobertur_1 || f.properties.Cobertura || f.properties.Cobertura_1 || '';
-    return parseCobertura(raw);
-  });
-  
-  const avg = coberturas.filter(v => v > 0).length > 0 ? Math.round(coberturas.filter(v => v > 0).reduce((s, v) => s + v, 0) / coberturas.filter(v => v > 0).length) : 0;
-  const conDato = coberturas.filter(v => v > 0).length;
-  const cero = coberturas.filter(v => v === 0).length;
-  
-  document.getElementById('legendCobertura').innerHTML = `
-    <div class="legend-item"><span>📊 Promedio: <b style="color:var(--color-primary);">${avg}%</b></span></div>
-    <div class="legend-item"><span>🌿 Con cobertura: <b style="color:#2e7d32;">${conDato}</b></span></div>
-    <div class="legend-item"><span>⬜ Sin cobertura (0%): <b style="color:var(--color-primary);">${cero}</b></span></div>
-    <div style="width:100%;height:6px;background:linear-gradient(90deg,#d6001c,#a5d6a7,#4caf50,#2e7d32);border-radius:4px;margin-top:4px;"></div>
-  `;
-
-  document.getElementById('legendTotal').textContent = data.length;
-}
-
-function updateCharts(data) {
-  const total = data.length;
-  if (total === 0) return;
 
   const campos = [
     { id: 'chartJuegos', key: 'Juegos_inf', statSi: 'statJuegosSi', statNo: 'statJuegosNo' },
@@ -1301,7 +1461,7 @@ function updateCharts(data) {
   ];
 
   campos.forEach(campo => {
-    const si = data.filter(f => parseSiNo(f.properties[campo.key])).length;
+    const si = allFeatures.filter(f => parseSiNo(f.properties[campo.key])).length;
     const no = total - si;
     
     document.getElementById(campo.statSi).textContent = fmt(si);
@@ -1313,9 +1473,8 @@ function updateCharts(data) {
     }
   });
 
-  // Luminaria
   const luminarias = {};
-  data.forEach(f => {
+  allFeatures.forEach(f => {
     const key = f.properties.Luminaria || 'Sin dato';
     luminarias[key] = (luminarias[key] || 0) + 1;
   });
@@ -1328,14 +1487,11 @@ function updateCharts(data) {
     charts['chartLuminaria'].update();
   }
 
-  // ============================================================
-  // COBERTURA - INCLUYE 0% COMO CATEGORÍA SEPARADA
-  // ============================================================
-  const rangos = [0, 0, 0, 0, 0, 0]; // 0%, 1-20%, 21-40%, 41-60%, 61-80%, 81-100%
+  const rangos = [0, 0, 0, 0, 0, 0];
   let coberturaSum = 0;
   let coberturaCount = 0;
   
-  data.forEach(f => {
+  allFeatures.forEach(f => {
     const raw = f.properties.Cobertur_1 || f.properties.Cobertura || f.properties.Cobertura_1 || '';
     const cobertura = parseCobertura(raw);
     
@@ -1357,32 +1513,153 @@ function updateCharts(data) {
   document.getElementById('statCoberturaCero').textContent = fmt(rangos[0]);
   document.getElementById('statCoberturaConDato').textContent = fmt(coberturaCount);
   
-  console.log(`📊 Cobertura: 0%=${rangos[0]}, 1-20=${rangos[1]}, 21-40=${rangos[2]}, 41-60=${rangos[3]}, 61-80=${rangos[4]}, 81-100=${rangos[5]}`);
-  
   if (charts['chartCobertura']) {
     charts['chartCobertura'].data.datasets[0].data = rangos;
     charts['chartCobertura'].update();
   }
 }
 
-function updateInsights(data) {
-  const total = data.length;
-  const juegos = data.filter(f => parseSiNo(f.properties.Juegos_inf)).length;
-  const maquinas = data.filter(f => parseSiNo(f.properties.Máquinas)).length;
-  const accesibilidad = data.filter(f => parseSiNo(f.properties.Accesibili)).length;
-  const alumbrado = data.filter(f => parseSiNo(f.properties.Alumbrado)).length;
+// ============================================================
+//  INFO DE FILTRO
+// ============================================================
 
-  document.getElementById('insightJuegos').textContent = fmt(juegos);
-  document.getElementById('insightJuegosPct').textContent = pct(juegos, total);
-  document.getElementById('insightMaquinas').textContent = fmt(maquinas);
-  document.getElementById('insightMaquinasPct').textContent = pct(maquinas, total);
-  document.getElementById('insightAccesibilidad').textContent = fmt(accesibilidad);
-  document.getElementById('insightAccesibilidadPct').textContent = pct(accesibilidad, total);
-  document.getElementById('insightAlumbrado').textContent = fmt(alumbrado);
-  document.getElementById('insightAlumbradoPct').textContent = pct(alumbrado, total);
+function actualizarInfoFiltro() {
+  const container = document.getElementById('filtroInfo');
+  if (!container) return;
+  
+  const activas = Array.from(capasActivas);
+  const totalCapas = Object.keys(capas).length;
+  
+  if (activas.length === 0) {
+    container.innerHTML = '<span style="color:var(--color-text-secondary);font-size:12px;">⚠️ Ninguna capa activa</span>';
+    return;
+  }
+  
+  let html = '<span style="font-size:12px;color:var(--color-text-secondary);">Mostrando: </span>';
+  const nombres = activas.map(key => {
+    const capa = capas[key];
+    if (!capa) return key;
+    const color = capa.config.color;
+    return `<span style="display:inline-block;background:${color}20;color:${color};padding:2px 10px;border-radius:12px;font-weight:600;font-size:11px;margin:0 2px;">${capa.config.icono} ${capa.config.nombre}</span>`;
+  });
+  html += nombres.join(' ');
+  
+  if (activas.length < totalCapas) {
+    html += ` <span style="font-size:11px;color:var(--color-text-secondary);">(${activas.length}/${totalCapas} capas)</span>`;
+  }
+  
+  container.innerHTML = html;
 }
 
-loadGeoJSON();
+// ============================================================
+//  LEYENDAS
+// ============================================================
+
+function actualizarLeyendaCapas() {
+  const container = document.getElementById('legendCapas');
+  if (!container) return;
+  
+  let html = `<div class="legend-label">🗺️ Capas</div>`;
+  
+  for (const [key, capa] of Object.entries(capas)) {
+    const config = capa.config;
+    const count = capa.features?.length || 0;
+    const isActive = capasActivas.has(key);
+    const hasData = count > 0;
+    
+    html += `
+      <div class="legend-item" style="display:flex;align-items:center;gap:8px;padding:3px 0;opacity:${hasData ? 1 : 0.4};">
+        <input type="checkbox" ${isActive ? 'checked' : ''} ${hasData ? '' : 'disabled'} 
+               data-capa="${key}" 
+               style="width:16px;height:16px;accent-color:${config.color};cursor:${hasData ? 'pointer' : 'default'};">
+        <span style="display:inline-block;width:14px;height:14px;border-radius:4px;background:${config.fillColor};border:2px solid ${config.color};flex-shrink:0;"></span>
+        <span style="flex:1;font-weight:500;">${config.icono} ${config.nombre}</span>
+        <span style="font-size:10px;color:#4a4b54;background:var(--color-container);padding:0 8px;border-radius:10px;">${count}</span>
+      </div>
+    `;
+  }
+  
+  container.innerHTML = html;
+  
+  container.querySelectorAll('input[type="checkbox"]:not([disabled])').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+      const key = this.dataset.capa;
+      if (this.checked) {
+        capasActivas.add(key);
+        if (capasLayer[key]) {
+          map.addLayer(capasLayer[key]);
+        }
+      } else {
+        capasActivas.delete(key);
+        if (capasLayer[key]) {
+          map.removeLayer(capasLayer[key]);
+        }
+      }
+      actualizarTodosLosIndicadores();
+      actualizarLeyendaCapas();
+      actualizarInfoFiltro();
+    });
+  });
+}
+
+function actualizarLeyendaAtributos() {
+  const allFeatures = getFeaturesFiltradas();
+  
+  const luminarias = [...new Set(allFeatures.map(f => f.properties.Luminaria || 'Sin dato'))].filter(Boolean).sort();
+  const legendLum = document.getElementById('legendLuminaria');
+  if (luminarias.length > 0) {
+    legendLum.innerHTML = luminarias.map(l => `
+      <div class="legend-item">
+        <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${l.includes('LED') ? '#2e7d32' : l.includes('Convencional') ? '#d6001c' : l.includes('Fotovoltaica') ? '#ff8f00' : '#b0b5c7'};border:1px solid var(--color-border);"></span>
+        <span>${l}</span>
+      </div>
+    `).join('');
+  } else {
+    legendLum.innerHTML = '<div class="legend-item"><span>Sin datos</span></div>';
+  }
+
+  const coberturas = allFeatures.map(f => {
+    const raw = f.properties.Cobertur_1 || f.properties.Cobertura || f.properties.Cobertura_1 || '';
+    return parseCobertura(raw);
+  });
+  
+  const avg = coberturas.filter(v => v > 0).length > 0 ? Math.round(coberturas.filter(v => v > 0).reduce((s, v) => s + v, 0) / coberturas.filter(v => v > 0).length) : 0;
+  const conDato = coberturas.filter(v => v > 0).length;
+  const cero = coberturas.filter(v => v === 0).length;
+  
+  document.getElementById('legendCobertura').innerHTML = `
+    <div class="legend-item"><span>📊 Promedio: <b style="color:var(--color-primary);">${avg}%</b></span></div>
+    <div class="legend-item"><span>🌿 Con cobertura: <b style="color:#2e7d32;">${conDato}</b></span></div>
+    <div class="legend-item"><span>⬜ Sin cobertura (0%): <b style="color:var(--color-primary);">${cero}</b></span></div>
+    <div style="width:100%;height:6px;background:linear-gradient(90deg,#d6001c,#a5d6a7,#4caf50,#2e7d32);border-radius:4px;margin-top:4px;"></div>
+  `;
+}
+
+// ============================================================
+//  AJUSTAR VISTA DEL MAPA
+// ============================================================
+
+function ajustarVistaMapa() {
+  try {
+    const allLayers = Object.values(capasLayer).filter(l => l.getLayers().length > 0);
+    if (allLayers.length > 0) {
+      const group = L.featureGroup(allLayers.flatMap(g => g.getLayers()));
+      const bounds = group.getBounds();
+      if (bounds.isValid()) {
+        map.fitBounds(bounds, { padding: [40, 40] });
+        return;
+      }
+    }
+  } catch (e) {}
+  
+  map.setView([-34.17, -70.74], 13);
+}
+
+// ============================================================
+//  INICIAR
+// ============================================================
+
+cargarTodasLasCapas();
 </script>
 
 </body>
