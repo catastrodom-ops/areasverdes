@@ -753,8 +753,9 @@
   </div>
 
   <footer>
-    <span><b>Fuente:</b> Catastro de Áreas Verdes · Rancagua</span>
-    <span id="footTotal">0 registros</span>
+       <span><b>Levantamiento y catastro:</b> Pablo Caroca - Daniel Espinoza</span>
+        <span id="footTotal">0 registros</span>
+        <span><b>Diseño visor:</b> Daniel Espinoza</span>
   </footer>
 
 </div>
@@ -1110,21 +1111,18 @@ function inicializarAppConCapas() {
     map = L.map('map', { scrollWheelZoom: true, preferCanvas: true });
     mapInitialized = true;
     
-    const CartoDB = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
-      subdomains: 'abcd',
-      minZoom: 4,
-      maxZoom: 20
-    }).addTo(map);
+ const Esri_WorldGrayCanvas = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+	attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
+    minZoom: 4,
+    maxZoom: 19
+      }).addTo(map);
     
-    const GoogleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
-      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-      minZoom: 5,
-      maxZoom: 20,
-      attribution: '&copy; Google'
-    });
+    const Esri_WorldImagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+	attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+});
     
-    const baseMaps = { 'Carto': CartoDB, 'Google Sat': GoogleSat };
+    const baseMaps = { 'Esri gris': Esri_WorldGrayCanvas, 'Esri satelital': Esri_WorldImagery };
+         
     L.control.layers(baseMaps, null, { position: 'topright', collapsed: false }).addTo(map);
   }
   
