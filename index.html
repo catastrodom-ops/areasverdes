@@ -741,7 +741,7 @@
     </div>
     <div class="insight">
       <h3>🏋️ Máquinas de ejercicio</h3>
-      <p><span class="stat" id="insightMaquinas">0</span> áreas tienen máquinas de ejercicio (<span id="insightMaquinasPct">0%</span>)</p>🏞️
+      <p><span class="stat" id="insightMaquinas">0</span> áreas tienen máquinas de ejercicio (<span id="insightMaquinasPct">0%</span>)</p>
     </div>
     <div class="insight">
       <h3>♿ Accesibilidad universal</h3>
@@ -754,9 +754,9 @@
   </div>
 
   <footer>
-       <span><b>Levantamiento y catastro:</b> Pablo Caroca - Daniel Espinoza</span>
-        <span id="footTotal">0 registros</span>
-        <span><b>Diseño visor:</b> Daniel Espinoza</span>
+    <span><b>Levantamiento y catastro:</b> Pablo Caroca - Daniel Espinoza</span>
+    <span id="footTotal">0 registros</span>
+    <span><b>Diseño visor:</b> Daniel Espinoza</span>
   </footer>
 
 </div>
@@ -786,10 +786,24 @@
 
 <script>
 // ============================================================
-//  CONFIGURACIÓN DE CAPAS
+//  CONFIGURACIÓN DE CAPAS - ACTUALIZADA CON TUS ARCHIVOS
 // ============================================================
 
 const CAPAS_CONFIG = {
+  'parques': {
+    urls: ['data/Parques.geojson.json'],
+    nombre: 'Parques',
+    icono: '🏞️',
+    color: '#d6001c',
+    fillColor: '#ff6b6b',
+    visible: true,
+    estilo: {
+      color: '#d6001c',
+      weight: 3,
+      opacity: 0.8,
+      fillOpacity: 0.25
+    }
+  },
   'areas_verdes': {
     urls: ['data/av3.geojson.json'],
     nombre: 'Áreas Verdes',
@@ -801,22 +815,7 @@ const CAPAS_CONFIG = {
       color: '#4caf50',
       weight: 2,
       opacity: 0.8,
-      fillOpacity: 0.5
-    }
-  },
-  'parques': {
-    urls: ['data/Parques.geojson.json'],
-    nombre: 'Parques',
-    icono: '🏞️',
-    color: '#d6001c',
-    fillColor: '#ff6b6b',
-    visible: true,
-    estilo: {
-      color: '#ff6b6b',
-      weight: 3,
-      opacity: 0.8,
-      fillOpacity: 0.3,
-      dashArray: '5, 5'
+      fillOpacity: 0.4
     }
   }
 };
@@ -1112,18 +1111,18 @@ function inicializarAppConCapas() {
     map = L.map('map', { scrollWheelZoom: true, preferCanvas: true });
     mapInitialized = true;
     
- const Esri_WorldGrayCanvas = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
-	attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
-    minZoom: 4,
-    maxZoom: 19
-      }).addTo(map);
+    const Esri_WorldGrayCanvas = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
+      minZoom: 4,
+      maxZoom: 19
+    }).addTo(map);
     
     const Esri_WorldImagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-	attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-});
+      attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+    });
     
     const baseMaps = { 'Esri gris': Esri_WorldGrayCanvas, 'Esri satelital': Esri_WorldImagery };
-         
+    
     L.control.layers(baseMaps, null, { position: 'topright', collapsed: false }).addTo(map);
   }
   
@@ -1176,7 +1175,10 @@ function renderizarCapa(key, capa, group) {
     'Observacio': { icono: '📝', label: 'Observaciones' },
     'OBS': { icono: '📝', label: 'Observaciones' },
     'Estado_del': { icono: '📊', label: 'Estado' },
-    'SUP_M2': { icono: '📐', label: 'Superficie (m²)' }
+    'SUP_M2': { icono: '📐', label: 'Superficie (m²)' },
+    'NOMBRE': { icono: '🏷️', label: 'Nombre' },
+    'Nombre_1': { icono: '🏷️', label: 'Nombre' },
+    'DIRECCION': { icono: '📍', label: 'Dirección' }
   };
   
   features.forEach(f => {
@@ -1186,13 +1188,15 @@ function renderizarCapa(key, capa, group) {
       style: config.estilo,
       onEachFeature: function(feat, layer) {
         const props = feat.properties;
-        const nombre = props.Nombre_1 || props.IDENTIFICA || props.nombre || props.NOMBRE || 'Sin nombre';
+        // Buscar nombre en múltiples campos
+        const nombre = props.NOMBRE || props.Nombre_1 || props.IDENTIFICA || props.nombre || 'Sin nombre';
+        const direccion = props.DIRECCION || props.Localizaci || '';
         
         let propRows = '';
-        const excludeKeys = ['Nombre_1', 'IDENTIFICA', 'nombre', 'NOMBRE', 'geometry', 'OBJECTID', 'CDT', 'ZONA_PROP', 'ZONA_PRC', 'ID_TEMA', 'TEMA', 'SIT_IPT', 'SUB_TEMA', 'PLANO__VER', 'PRC_M23', 'N°', 'Marca_temp', 'Shape_Length', 'Shape_Area'];
+        const excludeKeys = ['Nombre_1', 'IDENTIFICA', 'nombre', 'NOMBRE', 'geometry', 'OBJECTID', 'CDT', 'ZONA_PROP', 'ZONA_PRC', 'ID_TEMA', 'TEMA', 'SIT_IPT', 'SUB_TEMA', 'PLANO__VER', 'PRC_M23', 'N°', 'Marca_temp', 'Shape_Length', 'Shape_Area', 'FID', 'ESTADO', 'OBSERVACIO', 'SUP', 'DECRETO_N'];
         
         // Campos prioritarios en orden
-        const camposPrioritarios = ['TIPO', 'USO', 'Localizaci', 'Juegos_inf', 'Máquinas', 'Accesibili', 'Alumbrado', 'Estacionam', 'Mobiliario', 'Luminaria', 'Cobertura', 'Cobertur_1', 'Cobertura_1', 'Observacio', 'OBS', 'Estado_del', 'SUP_M2'];
+        const camposPrioritarios = ['NOMBRE', 'DIRECCION', 'Localizaci', 'TIPO', 'USO', 'Juegos_inf', 'Máquinas', 'Accesibili', 'Alumbrado', 'Estacionam', 'Mobiliario', 'Luminaria', 'Cobertura', 'Cobertur_1', 'Cobertura_1', 'Observacio', 'OBS', 'Estado_del', 'SUP_M2'];
         
         camposPrioritarios.forEach(key => {
           if (props[key] !== undefined && props[key] !== null && props[key] !== '' && props[key] !== ' ') {
@@ -1213,8 +1217,10 @@ function renderizarCapa(key, capa, group) {
             
             if (key === 'Cobertura' || key === 'Cobertur_1' || key === 'Cobertura_1') {
               const coberturaNum = parseCobertura(valor);
-              display = `${coberturaNum}% (${valor})`;
+              display = `${coberturaNum}%`;
             }
+            
+            if (key === 'NOMBRE' && valor === ' ') return;
             
             propRows += `<div class="pop-row"><b>${info.icono} ${info.label}</b><span>${display}</span></div>`;
           }
@@ -1238,8 +1244,11 @@ function renderizarCapa(key, capa, group) {
             propRows += `<div class="pop-row"><b>${info.icono} ${info.label}</b><span>${display}</span></div>`;
           });
         
+        const titulo = nombre !== 'Sin nombre' ? `${config.icono} ${nombre}` : `${config.icono} ${config.nombre}`;
+        
         layer.bindPopup(`
-          <div class="pop-title" style="color:${config.color}">${config.icono} ${nombre}</div>
+          <div class="pop-title" style="color:${config.color}">${titulo}</div>
+          ${direccion ? `<div class="pop-row"><b>📍 Dirección</b><span>${direccion}</span></div>` : ''}
           <div class="pop-row"><b>📂 Capa</b><span>${config.nombre}</span></div>
           ${propRows}
         `);
@@ -1315,7 +1324,7 @@ function configurarChartJS() {
       labels: [],
       datasets: [{
         data: [],
-        backgroundColor: ['#2e7d32', '#d6001c', '#ff8f00', '#42a5f5', '#b0b5c7'],
+        backgroundColor: ['#2e7d32', '#d6001c', '#ff8f00', '#42a5f5', '#b0b5c7', '#6a1b9a', '#00838f'],
         borderColor: '#ffffff',
         borderWidth: 2
       }]
@@ -1388,7 +1397,7 @@ function actualizarTodosLosIndicadores() {
   const alumbrado = allFeatures.filter(f => parseSiNo(f.properties.Alumbrado)).length;
   
   const coberturas = allFeatures.map(f => {
-    const raw = f.properties.Cobertur_1 || f.properties.Cobertura || f.properties.Cobertura_1 || '';
+    const raw = f.properties.Cobertura || f.properties.Cobertur_1 || f.properties.Cobertura_1 || '';
     return parseCobertura(raw);
   }).filter(v => v > 0);
   const coberturaPromedio = coberturas.length > 0 ? Math.round(coberturas.reduce((s, v) => s + v, 0) / coberturas.length) : 0;
@@ -1491,7 +1500,7 @@ function actualizarGraficos(allFeatures) {
   let coberturaCount = 0;
   
   allFeatures.forEach(f => {
-    const raw = f.properties.Cobertur_1 || f.properties.Cobertura || f.properties.Cobertura_1 || '';
+    const raw = f.properties.Cobertura || f.properties.Cobertur_1 || f.properties.Cobertura_1 || '';
     const cobertura = parseCobertura(raw);
     
     if (cobertura === 0) {
@@ -1618,7 +1627,7 @@ function actualizarLeyendaAtributos() {
   }
 
   const coberturas = allFeatures.map(f => {
-    const raw = f.properties.Cobertur_1 || f.properties.Cobertura || f.properties.Cobertura_1 || '';
+    const raw = f.properties.Cobertura || f.properties.Cobertur_1 || f.properties.Cobertura_1 || '';
     return parseCobertura(raw);
   });
   
