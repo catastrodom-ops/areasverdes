@@ -1,886 +1,873 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Catastro de Áreas Verdes · Rancagua</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-  <style>
-    /* ===== ESTILOS (igual que antes) ===== */
-    :root {
-      --color-primary: #d6001c;
-      --color-surface: #f9f9ff;
-      --color-container: #ffffff;
-      --color-container-alt: #f1f3ff;
-      --color-text-primary: #1a1b21;
-      --color-text-secondary: #4a4b54;
-      --color-border: #d5daeb;
-      --color-shadow: rgba(0, 0, 0, 0.06);
-      --font-display: 'Montserrat', sans-serif;
-      --font-body: 'Montserrat', sans-serif;
-      --font-mono: 'Montserrat', 'SF Mono', monospace;
-    }
-    
-    * { box-sizing: border-box; }
-    html, body { 
-      margin: 0; 
-      padding: 0; 
-      background: var(--color-surface); 
-      color: var(--color-text-primary); 
-      font-family: var(--font-body);
-      font-weight: 400;
-    }
-    ::selection { background: var(--color-primary); color: #fff; }
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: var(--color-container-alt); }
-    ::-webkit-scrollbar-thumb { background: var(--color-primary); border-radius: 3px; }
-
-    .wrap { max-width: 1440px; margin: 0 auto; padding: 20px 24px 32px; }
-
-    header {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      border-bottom: 2px solid var(--color-primary);
-      padding-bottom: 20px;
-      margin-bottom: 24px;
-      gap: 8px;
-      background: var(--color-container);
-      padding: 24px 24px 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px var(--color-shadow);
-    }
-    .eyebrow {
-      font-family: var(--font-mono); 
-      font-size: 11px; 
-      letter-spacing: .2em;
-      text-transform: uppercase; 
-      color: var(--color-primary); 
-      margin: 0;
-      display: flex; 
-      align-items: center; 
-      justify-content: center;
-      gap: 8px;
-      font-weight: 600;
-    }
-    .eyebrow::before {
-      content: ''; 
-      width: 8px; 
-      height: 8px; 
-      background: var(--color-primary);
-      display: inline-block;
-      border-radius: 50%;
-    }
-    h1 {
-      font-family: var(--font-display); 
-      font-weight: 800; 
-      font-size: 42px;
-      line-height: 1.1;
-      margin: 0; 
-      letter-spacing: -0.01em;
-      color: var(--color-text-primary);
-    }
-    h1 em { 
-      font-style: normal; 
-      color: var(--color-primary); 
-      font-weight: 800;
-    }
-    .subtitle { 
-      color: var(--color-text-secondary); 
-      font-size: 14px; 
-      max-width: 800px; 
-      line-height: 1.6; 
-      margin: 8px auto 0; 
-      font-weight: 400;
-    }
-    .subtitle b { font-weight: 600; color: var(--color-text-primary); }
-
-    .kpis {
-      display: grid; 
-      grid-template-columns: repeat(6, 1fr); 
-      gap: 12px;
-      margin-bottom: 18px;
-    }
-    .kpi { 
-      background: var(--color-container); 
-      padding: 16px 18px; 
-      border-radius: 8px;
-      box-shadow: 0 2px 8px var(--color-shadow);
-      border: 1px solid var(--color-border);
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .kpi:hover { 
-      transform: translateY(-2px);
-      box-shadow: 0 4px 16px var(--color-shadow);
-    }
-    .kpi .label {
-      font-family: var(--font-mono); 
-      font-size: 10px; 
-      text-transform: uppercase;
-      letter-spacing: .08em; 
-      color: var(--color-text-secondary); 
-      margin-bottom: 6px;
-      font-weight: 600;
-    }
-    .kpi .value {
-      font-family: var(--font-display); 
-      font-size: 28px; 
-      font-weight: 700;
-      line-height: 1; 
-      color: var(--color-text-primary);
-      letter-spacing: -0.02em;
-    }
-    .kpi .value span { 
-      font-size: 14px; 
-      color: var(--color-text-secondary); 
-      font-weight: 400; 
-    }
-    .kpi .sub { 
-      font-size: 11px; 
-      color: var(--color-text-secondary); 
-      margin-top: 4px; 
-      font-weight: 400;
-    }
-    .kpi.accent .value { color: var(--color-primary); }
-    .kpi.highlight .value { color: #1b5e20; }
-    .kpi.success .value { color: #2e7d32; }
-    .kpi.danger .value { color: var(--color-primary); }
-
-    .grid {
-      display: grid; 
-      grid-template-columns: 1fr; 
-      gap: 16px; 
-      margin-bottom: 16px;
-    }
-    .panel { 
-      background: var(--color-container); 
-      border-radius: 8px;
-      box-shadow: 0 2px 8px var(--color-shadow);
-      border: 1px solid var(--color-border);
-      overflow: hidden;
-    }
-    .panel-head {
-      display: flex; 
-      justify-content: space-between; 
-      align-items: center;
-      padding: 14px 20px; 
-      border-bottom: 1px solid var(--color-border);
-      background: var(--color-container-alt);
-    }
-    .panel-head h2 {
-      font-family: var(--font-display); 
-      font-size: 16px; 
-      font-weight: 700;
-      margin: 0; 
-      text-transform: uppercase; 
-      letter-spacing: .06em;
-      color: var(--color-text-primary);
-    }
-    .panel-head .count {
-      font-family: var(--font-mono); 
-      font-size: 11px; 
-      color: var(--color-text-secondary);
-      font-weight: 500;
-      background: var(--color-container);
-      padding: 4px 12px;
-      border-radius: 20px;
-      border: 1px solid var(--color-border);
-    }
-
-    #map {
-      height: 520px; 
-      width: 100%; 
-      background: #f0f2f8;
-    }
-    .leaflet-popup-content-wrapper {
-      background: var(--color-container); 
-      color: var(--color-text-primary); 
-      border-radius: 8px;
-      font-family: var(--font-body); 
-      border: 1px solid var(--color-border);
-      max-width: 480px;
-      box-shadow: 0 4px 16px var(--color-shadow);
-    }
-    .leaflet-popup-tip { background: var(--color-container); }
-    .leaflet-popup-content { 
-      margin: 12px 16px; 
-      padding-right: 8px;
-      font-size: 12px; 
-      line-height: 1.6; 
-      font-weight: 400;
-      max-height: 480px;
-      overflow-y: auto;
-    }
-    .pop-title {
-      font-family: var(--font-display); 
-      font-size: 16px; 
-      font-weight: 700;
-      color: var(--color-primary); 
-      text-transform: uppercase; 
-      margin-bottom: 6px;
-      letter-spacing: .02em;
-      border-bottom: 2px solid var(--color-border);
-      padding-bottom: 6px;
-    }
-    .pop-row { 
-      display: flex; 
-      justify-content: space-between;
-      padding: 3px 0;
-      border-bottom: 1px solid rgba(0,0,0,0.04);
-    }
-    .pop-row b { 
-      color: var(--color-text-secondary); 
-      font-weight: 600; 
-    }
-    .pop-row .si { color: #1b5e20; font-weight: 700; }
-    .pop-row .no { color: var(--color-text-secondary); }
-    .pop-row .porcentaje { color: var(--color-primary); font-weight: 600; }
-
-    .map-wrapper {
-      display: flex;
-      gap: 0;
-      background: var(--color-container);
-    }
-    #map {
-      height: 520px;
-      width: 100%;
-      background: #f0f2f8;
-      flex: 1;
-    }
-
-    .legend-vertical {
-      width: 260px;
-      min-width: 260px;
-      background: var(--color-container-alt);
-      padding: 16px 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      font-family: var(--font-mono);
-      font-size: 12px;
-      color: var(--color-text-secondary);
-      border-left: 1px solid var(--color-border);
-      max-height: 520px;
-      overflow-y: auto;
-    }
-    .legend-vertical .legend-title {
-      font-family: var(--font-display);
-      font-size: 15px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .06em;
-      color: var(--color-text-primary);
-      border-bottom: 2px solid var(--color-primary);
-      padding-bottom: 8px;
-      margin-bottom: 6px;
-    }
-    .legend-vertical .legend-section {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .legend-vertical .legend-label {
-      font-size: 10px;
-      color: var(--color-text-secondary);
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: .05em;
-    }
-    .legend-vertical .legend-divider {
-      border: none;
-      border-top: 1px solid var(--color-border);
-      margin: 6px 0;
-    }
-    .legend-vertical .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 11px;
-      font-weight: 400;
-    }
-    .legend-vertical .legend-icon {
-      font-size: 14px;
-      width: 22px;
-      text-align: center;
-    }
-    .legend-vertical .capa-checkbox {
-      width: 16px;
-      height: 16px;
-      accent-color: var(--color-primary);
-      cursor: pointer;
-    }
-    .legend-vertical .capa-color {
-      width: 14px;
-      height: 14px;
-      border-radius: 4px;
-      border: 1px solid var(--color-border);
-      flex-shrink: 0;
-    }
-
-    .charts-grid {
-      display: grid; 
-      grid-template-columns: repeat(3, 1fr); 
-      gap: 16px;
-      margin-top: 16px;
-    }
-    .chart-box { 
-      padding: 16px 18px 20px; 
-      background: var(--color-container);
-      border-radius: 8px;
-      border: 1px solid var(--color-border);
-      box-shadow: 0 2px 8px var(--color-shadow);
-    }
-    .chart-box canvas { 
-      max-height: 180px; 
-      max-width: 100%;
-      min-height: 120px;
-    }
-    .chart-box .chart-title {
-      font-family: var(--font-display);
-      font-size: 13px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: .06em;
-      color: var(--color-text-secondary);
-      margin-bottom: 6px;
-      text-align: center;
-    }
-    .chart-box .chart-subtitle {
-      font-size: 10px;
-      color: var(--color-text-secondary);
-      text-align: center;
-      margin-top: 6px;
-      font-family: var(--font-mono);
-      font-weight: 400;
-    }
-    .chart-box .chart-stats {
-      display: flex;
-      justify-content: center;
-      gap: 16px;
-      margin-bottom: 8px;
-      font-family: var(--font-mono);
-      font-size: 11px;
-      font-weight: 500;
-    }
-    .chart-box .chart-stats .stat-si { color: #1b5e20; font-weight: 600; }
-    .chart-box .chart-stats .stat-no { color: var(--color-text-secondary); }
-
-    .insights {
-      display: grid; 
-      grid-template-columns: repeat(4, 1fr); 
-      gap: 16px; 
-      margin-top: 16px;
-    }
-    .insight {
-      padding: 18px 20px; 
-      border-left: 4px solid var(--color-primary);
-      background: var(--color-container);
-      border-radius: 8px;
-      box-shadow: 0 2px 8px var(--color-shadow);
-      border: 1px solid var(--color-border);
-    }
-    .insight h3 {
-      font-family: var(--font-display); 
-      font-size: 14px; 
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .05em; 
-      margin: 0 0 6px; 
-      color: var(--color-text-primary);
-    }
-    .insight p { 
-      font-size: 13px; 
-      line-height: 1.7; 
-      color: var(--color-text-secondary); 
-      margin: 0; 
-      font-weight: 400;
-    }
-    .insight b { 
-      color: var(--color-text-primary); 
-      font-weight: 600; 
-    }
-    .insight .stat { color: var(--color-primary); font-weight: 700; }
-
-    .capa-indicador {
-      display: inline-block;
-      padding: 2px 10px;
-      border-radius: 12px;
-      font-size: 10px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: .05em;
-      margin-left: 6px;
-    }
-    .capa-indicador.areas_verdes { background: #e8f5e9; color: #1b5e20; }
-    .capa-indicador.parques { background: #ffebee; color: #b71c1c; }
-    .capa-indicador.mixto { background: #e3f2fd; color: #0d47a1; }
-
-    footer {
-      margin-top: 20px; 
-      padding-top: 16px; 
-      border-top: 2px solid var(--color-primary);
-      font-family: var(--font-mono); 
-      font-size: 10px; 
-      color: var(--color-text-secondary);
-      display: flex; 
-      justify-content: space-between; 
-      flex-wrap: wrap; 
-      gap: 8px;
-      font-weight: 400;
-      letter-spacing: .02em;
-    }
-    footer b { color: var(--color-text-primary); font-weight: 600; }
-
-    #loadOverlay {
-      position: fixed; 
-      inset: 0; 
-      background: var(--color-surface); 
-      z-index: 2000;
-      display: flex; 
-      align-items: center; 
-      justify-content: center;
-      flex-direction: column; 
-      gap: 16px; 
-      font-family: var(--font-mono);
-      font-size: 13px; 
-      color: var(--color-text-secondary);
-    }
-    .spinner {
-      width: 40px; 
-      height: 40px; 
-      border: 3px solid var(--color-border);
-      border-top-color: var(--color-primary); 
-      border-radius: 50%;
-      animation: spin .8s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .errbox {
-      background: var(--color-container); 
-      border: 2px solid var(--color-primary);
-      color: var(--color-text-primary); 
-      padding: 20px 24px; 
-      font-size: 13px; 
-      line-height: 1.6;
-      max-width: 520px; 
-      font-family: var(--font-body);
-      border-radius: 8px;
-      box-shadow: 0 4px 16px var(--color-shadow);
-    }
-    .errbox .btn-retry {
-      background: var(--color-primary);
-      color: #fff;
-      border: none;
-      padding: 8px 20px;
-      margin-top: 10px;
-      cursor: pointer;
-      font-family: var(--font-display);
-      font-size: 14px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: .05em;
-      border-radius: 4px;
-    }
-    .errbox .btn-retry:hover { opacity: 0.85; }
-    .load-progress {
-      width: 260px;
-      height: 4px;
-      background: var(--color-border);
-      border-radius: 4px;
-      overflow: hidden;
-      margin-top: 6px;
-    }
-    .load-progress-bar {
-      height: 100%;
-      width: 0%;
-      background: var(--color-primary);
-      transition: width 0.3s ease;
-      border-radius: 4px;
-    }
-
-    #dropZone {
-      max-width: 520px;
-      width: 90%;
-    }
-    #dropInner {
-      border: 2px dashed var(--color-border);
-      padding: 32px 24px;
-      text-align: center;
-      background: var(--color-container);
-      cursor: pointer;
-      border-radius: 8px;
-      transition: border-color 0.3s;
-    }
-    #dropInner:hover { border-color: var(--color-primary); }
-    #dropInner .drop-title {
-      font-family: var(--font-display);
-      font-size: 18px;
-      font-weight: 700;
-      text-transform: uppercase;
-      color: var(--color-primary);
-      margin-bottom: 6px;
-    }
-    #dropInner .drop-text {
-      font-family: var(--font-body);
-      font-size: 13px;
-      color: var(--color-text-secondary);
-      line-height: 1.6;
-      margin-bottom: 14px;
-    }
-    #dropInner .drop-text b { color: var(--color-text-primary); font-weight: 600; }
-    #pickBtn {
-      padding: 10px 24px;
-      border: none;
-      background: var(--color-primary);
-      color: #fff;
-      font-family: var(--font-display);
-      font-size: 14px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: .05em;
-      cursor: pointer;
-      border-radius: 4px;
-    }
-    #pickBtn:hover { opacity: 0.85; }
-
-    @media (max-width: 1200px) {
-      .charts-grid { grid-template-columns: 1fr 1fr; }
-      .insights { grid-template-columns: 1fr 1fr; }
-      .kpis { grid-template-columns: repeat(4, 1fr); }
-    }
-    @media (max-width: 980px) {
-      .charts-grid { grid-template-columns: 1fr 1fr; }
-      .insights { grid-template-columns: 1fr; }
-      .kpis { grid-template-columns: repeat(3, 1fr); }
-      h1 { font-size: 28px; }
-      #map { height: 380px; }
-    }
-    @media (max-width: 768px) {
-      .map-wrapper { flex-direction: column; }
-      #map { height: 380px; }
-      .legend-vertical {
-        width: 100%;
-        min-width: unset;
-        border-left: none;
-        border-top: 1px solid var(--color-border);
-        flex-direction: row;
-        flex-wrap: wrap;
-        padding: 12px 16px;
-        gap: 6px 16px;
-        font-size: 11px;
-        max-height: 300px;
+  <!DOCTYPE html>
+  <html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Catastro de Áreas Verdes · Rancagua</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+      /* ===== ESTILOS (igual que antes) ===== */
+      :root {
+        --color-primary: #d6001c;
+        --color-surface: #f9f9ff;
+        --color-container: #ffffff;
+        --color-container-alt: #f1f3ff;
+        --color-text-primary: #1a1b21;
+        --color-text-secondary: #4a4b54;
+        --color-border: #d5daeb;
+        --color-shadow: rgba(0, 0, 0, 0.06);
+        --font-display: 'Montserrat', sans-serif;
+        --font-body: 'Montserrat', sans-serif;
+        --font-mono: 'Montserrat', 'SF Mono', monospace;
       }
-      .legend-vertical .legend-title { width: 100%; font-size: 14px; padding-bottom: 4px; margin-bottom: 2px; }
-      .legend-vertical .legend-section { flex: 1; min-width: 100px; }
-      .legend-vertical .legend-divider { display: none; }
-      .charts-grid { grid-template-columns: 1fr; }
-      .insights { grid-template-columns: 1fr; }
-      .kpis { grid-template-columns: repeat(2, 1fr); }
-    }
-  </style>
-</head>
-<body>
-<div class="wrap" id="appWrap" style="display:none;">
-
-  <header>
-    <p class="eyebrow">Catastro de áreas verdes · Rancagua</p>
-    <h1>Áreas <em>Verdes</em> + <em style="color:#d6001c;">Parques</em></h1>
-    <p class="subtitle">
-      Distribución de áreas verdes y parques en la comuna de Rancagua.
-      <span id="filtroInfo" style="display:inline-block;margin-top:6px;"></span>
-    </p>
-  </header>
-
-  <div class="kpis" id="kpis">
-    <div class="kpi"><div class="label">🗺️ Total elementos</div><div class="value" id="kpiTotal">0</div><div class="sub" id="kpiTotalSub">todas las capas</div></div>
-    <div class="kpi highlight"><div class="label">🧩 Con juegos</div><div class="value" id="kpiJuegos">0</div><div class="sub">Juegos infantiles</div></div>
-    <div class="kpi success"><div class="label">🏋️ Con máquinas</div><div class="value" id="kpiMaquinas">0</div><div class="sub">Máquinas de ejercicio</div></div>
-    <div class="kpi accent"><div class="label">♿ Accesibles</div><div class="value" id="kpiAccesibilidad">0</div><div class="sub">Accesibilidad universal</div></div>
-    <div class="kpi"><div class="label">💡 Con alumbrado</div><div class="value" id="kpiAlumbrado">0</div><div class="sub">Alumbrado público</div></div>
-    <div class="kpi danger"><div class="label">🌿 Cobertura promedio</div><div class="value" id="kpiCobertura">0%</div><div class="sub">vegetación</div></div>
-  </div>
-
-  <div class="grid">
-    <div class="panel">
-      <div class="panel-head">
-        <h2>Mapa de Áreas Verdes y Parques</h2>
-        <span class="count" id="mapCount">0 elementos</span>
-      </div>
       
-      <div class="map-wrapper">
-        <div id="map" class="leaflet-container"></div>
+      * { box-sizing: border-box; }
+      html, body { 
+        margin: 0; 
+        padding: 0; 
+        background: var(--color-surface); 
+        color: var(--color-text-primary); 
+        font-family: var(--font-body);
+        font-weight: 400;
+      }
+      ::selection { background: var(--color-primary); color: #fff; }
+      ::-webkit-scrollbar { width: 6px; height: 6px; }
+      ::-webkit-scrollbar-track { background: var(--color-container-alt); }
+      ::-webkit-scrollbar-thumb { background: var(--color-primary); border-radius: 3px; }
+
+      .wrap { max-width: 1440px; margin: 0 auto; padding: 20px 24px 32px; }
+
+      header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        border-bottom: 2px solid var(--color-primary);
+        padding-bottom: 20px;
+        margin-bottom: 24px;
+        gap: 8px;
+        background: var(--color-container);
+        padding: 24px 24px 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px var(--color-shadow);
+      }
+      .eyebrow {
+        font-family: var(--font-mono); 
+        font-size: 11px; 
+        letter-spacing: .2em;
+        text-transform: uppercase; 
+        color: var(--color-primary); 
+        margin: 0;
+        display: flex; 
+        align-items: center; 
+        justify-content: center;
+        gap: 8px;
+        font-weight: 600;
+      }
+      .eyebrow::before {
+        content: ''; 
+        width: 8px; 
+        height: 8px; 
+        background: var(--color-primary);
+        display: inline-block;
+        border-radius: 50%;
+      }
+      h1 {
+        font-family: var(--font-display); 
+        font-weight: 800; 
+        font-size: 42px;
+        line-height: 1.1;
+        margin: 0; 
+        letter-spacing: -0.01em;
+        color: var(--color-text-primary);
+      }
+      h1 em { 
+        font-style: normal; 
+        color: var(--color-primary); 
+        font-weight: 800;
+      }
+      .subtitle { 
+        color: var(--color-text-secondary); 
+        font-size: 14px; 
+        max-width: 800px; 
+        line-height: 1.6; 
+        margin: 8px auto 0; 
+        font-weight: 400;
+      }
+      .subtitle b { font-weight: 600; color: var(--color-text-primary); }
+
+      .kpis {
+        display: grid; 
+        grid-template-columns: repeat(6, 1fr); 
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+      .kpi { 
+        background: var(--color-container); 
+        padding: 16px 18px; 
+        border-radius: 8px;
+        box-shadow: 0 2px 8px var(--color-shadow);
+        border: 1px solid var(--color-border);
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+      .kpi:hover { 
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px var(--color-shadow);
+      }
+      .kpi .label {
+        font-family: var(--font-mono); 
+        font-size: 10px; 
+        text-transform: uppercase;
+        letter-spacing: .08em; 
+        color: var(--color-text-secondary); 
+        margin-bottom: 6px;
+        font-weight: 600;
+      }
+      .kpi .value {
+        font-family: var(--font-display); 
+        font-size: 28px; 
+        font-weight: 700;
+        line-height: 1; 
+        color: var(--color-text-primary);
+        letter-spacing: -0.02em;
+      }
+      .kpi .value span { 
+        font-size: 14px; 
+        color: var(--color-text-secondary); 
+        font-weight: 400; 
+      }
+      .kpi .sub { 
+        font-size: 11px; 
+        color: var(--color-text-secondary); 
+        margin-top: 4px; 
+        font-weight: 400;
+      }
+      .kpi.accent .value { color: var(--color-primary); }
+      .kpi.highlight .value { color: #1b5e20; }
+      .kpi.success .value { color: #2e7d32; }
+      .kpi.danger .value { color: var(--color-primary); }
+
+      .grid {
+        display: grid; 
+        grid-template-columns: 1fr; 
+        gap: 16px; 
+        margin-bottom: 16px;
+      }
+      .panel { 
+        background: var(--color-container); 
+        border-radius: 8px;
+        box-shadow: 0 2px 8px var(--color-shadow);
+        border: 1px solid var(--color-border);
+        overflow: hidden;
+      }
+      .panel-head {
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center;
+        padding: 14px 20px; 
+        border-bottom: 1px solid var(--color-border);
+        background: var(--color-container-alt);
+      }
+      .panel-head h2 {
+        font-family: var(--font-display); 
+        font-size: 16px; 
+        font-weight: 700;
+        margin: 0; 
+        text-transform: uppercase; 
+        letter-spacing: .06em;
+        color: var(--color-text-primary);
+      }
+      .panel-head .count {
+        font-family: var(--font-mono); 
+        font-size: 11px; 
+        color: var(--color-text-secondary);
+        font-weight: 500;
+        background: var(--color-container);
+        padding: 4px 12px;
+        border-radius: 20px;
+        border: 1px solid var(--color-border);
+      }
+
+      #map {
+        height: 520px; 
+        width: 100%; 
+        background: #f0f2f8;
+      }
+      .leaflet-popup-content-wrapper {
+        background: var(--color-container); 
+        color: var(--color-text-primary); 
+        border-radius: 8px;
+        font-family: var(--font-body); 
+        border: 1px solid var(--color-border);
+        max-width: 480px;
+        box-shadow: 0 4px 16px var(--color-shadow);
+      }
+      .leaflet-popup-tip { background: var(--color-container); }
+      .leaflet-popup-content { 
+        margin: 12px 16px; 
+        padding-right: 8px;
+        font-size: 12px; 
+        line-height: 1.6; 
+        font-weight: 400;
+        max-height: 480px;
+        overflow-y: auto;
+      }
+      .pop-title {
+        font-family: var(--font-display); 
+        font-size: 16px; 
+        font-weight: 700;
+        color: var(--color-primary); 
+        text-transform: uppercase; 
+        margin-bottom: 6px;
+        letter-spacing: .02em;
+        border-bottom: 2px solid var(--color-border);
+        padding-bottom: 6px;
+      }
+      .pop-row { 
+        display: flex; 
+        justify-content: space-between;
+        padding: 3px 0;
+        border-bottom: 1px solid rgba(0,0,0,0.04);
+      }
+      .pop-row b { 
+        color: var(--color-text-secondary); 
+        font-weight: 600; 
+      }
+      .pop-row .si { color: #1b5e20; font-weight: 700; }
+      .pop-row .no { color: var(--color-text-secondary); }
+      .pop-row .porcentaje { color: var(--color-primary); font-weight: 600; }
+
+      .map-wrapper {
+        display: flex;
+        gap: 0;
+        background: var(--color-container);
+      }
+      #map {
+        height: 520px;
+        width: 100%;
+        background: #f0f2f8;
+        flex: 1;
+      }
+
+      .legend-vertical {
+        width: 260px;
+        min-width: 260px;
+        background: var(--color-container-alt);
+        padding: 16px 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--color-text-secondary);
+        border-left: 1px solid var(--color-border);
+        max-height: 520px;
+        overflow-y: auto;
+      }
+      .legend-vertical .legend-title {
+        font-family: var(--font-display);
+        font-size: 15px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: var(--color-text-primary);
+        border-bottom: 2px solid var(--color-primary);
+        padding-bottom: 8px;
+        margin-bottom: 6px;
+      }
+      .legend-vertical .legend-section {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .legend-vertical .legend-label {
+        font-size: 10px;
+        color: var(--color-text-secondary);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+      }
+      .legend-vertical .legend-divider {
+        border: none;
+        border-top: 1px solid var(--color-border);
+        margin: 6px 0;
+      }
+      .legend-vertical .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 11px;
+        font-weight: 400;
+      }
+      .legend-vertical .legend-icon {
+        font-size: 14px;
+        width: 22px;
+        text-align: center;
+      }
+      .legend-vertical .capa-checkbox {
+        width: 16px;
+        height: 16px;
+        accent-color: var(--color-primary);
+        cursor: pointer;
+      }
+      .legend-vertical .capa-color {
+        width: 14px;
+        height: 14px;
+        border-radius: 4px;
+        border: 1px solid var(--color-border);
+        flex-shrink: 0;
+      }
+
+      .charts-grid {
+        display: grid; 
+        grid-template-columns: repeat(3, 1fr); 
+        gap: 16px;
+        margin-top: 16px;
+      }
+      .chart-box { 
+        padding: 16px 18px 20px; 
+        background: var(--color-container);
+        border-radius: 8px;
+        border: 1px solid var(--color-border);
+        box-shadow: 0 2px 8px var(--color-shadow);
+      }
+      .chart-box canvas { 
+        max-height: 180px; 
+        max-width: 100%;
+        min-height: 120px;
+      }
+      .chart-box .chart-title {
+        font-family: var(--font-display);
+        font-size: 13px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: var(--color-text-secondary);
+        margin-bottom: 6px;
+        text-align: center;
+      }
+      .chart-box .chart-subtitle {
+        font-size: 10px;
+        color: var(--color-text-secondary);
+        text-align: center;
+        margin-top: 6px;
+        font-family: var(--font-mono);
+        font-weight: 400;
+      }
+      .chart-box .chart-stats {
+        display: flex;
+        justify-content: center;
+        gap: 16px;
+        margin-bottom: 8px;
+        font-family: var(--font-mono);
+        font-size: 11px;
+        font-weight: 500;
+      }
+      .chart-box .chart-stats .stat-si { color: #1b5e20; font-weight: 600; }
+      .chart-box .chart-stats .stat-no { color: var(--color-text-secondary); }
+
+      .insights {
+        display: grid; 
+        grid-template-columns: repeat(4, 1fr); 
+        gap: 16px; 
+        margin-top: 16px;
+      }
+      .insight {
+        padding: 18px 20px; 
+        border-left: 4px solid var(--color-primary);
+        background: var(--color-container);
+        border-radius: 8px;
+        box-shadow: 0 2px 8px var(--color-shadow);
+        border: 1px solid var(--color-border);
+      }
+      .insight h3 {
+        font-family: var(--font-display); 
+        font-size: 14px; 
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .05em; 
+        margin: 0 0 6px; 
+        color: var(--color-text-primary);
+      }
+      .insight p { 
+        font-size: 13px; 
+        line-height: 1.7; 
+        color: var(--color-text-secondary); 
+        margin: 0; 
+        font-weight: 400;
+      }
+      .insight b { 
+        color: var(--color-text-primary); 
+        font-weight: 600; 
+      }
+      .insight .stat { color: var(--color-primary); font-weight: 700; }
+
+      .capa-indicador {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 12px;
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        margin-left: 6px;
+      }
+      .capa-indicador.areas_verdes { background: #e8f5e9; color: #1b5e20; }
+      .capa-indicador.parques { background: #ffebee; color: #b71c1c; }
+      .capa-indicador.mixto { background: #e3f2fd; color: #0d47a1; }
+
+      footer {
+        margin-top: 20px; 
+        padding-top: 16px; 
+        border-top: 2px solid var(--color-primary);
+        font-family: var(--font-mono); 
+        font-size: 10px; 
+        color: var(--color-text-secondary);
+        display: flex; 
+        justify-content: space-between; 
+        flex-wrap: wrap; 
+        gap: 8px;
+        font-weight: 400;
+        letter-spacing: .02em;
+      }
+      footer b { color: var(--color-text-primary); font-weight: 600; }
+
+      #loadOverlay {
+        position: fixed; 
+        inset: 0; 
+        background: var(--color-surface); 
+        z-index: 2000;
+        display: flex; 
+        align-items: center; 
+        justify-content: center;
+        flex-direction: column; 
+        gap: 16px; 
+        font-family: var(--font-mono);
+        font-size: 13px; 
+        color: var(--color-text-secondary);
+      }
+      .spinner {
+        width: 40px; 
+        height: 40px; 
+        border: 3px solid var(--color-border);
+        border-top-color: var(--color-primary); 
+        border-radius: 50%;
+        animation: spin .8s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .errbox {
+        background: var(--color-container); 
+        border: 2px solid var(--color-primary);
+        color: var(--color-text-primary); 
+        padding: 20px 24px; 
+        font-size: 13px; 
+        line-height: 1.6;
+        max-width: 520px; 
+        font-family: var(--font-body);
+        border-radius: 8px;
+        box-shadow: 0 4px 16px var(--color-shadow);
+      }
+      .errbox .btn-retry {
+        background: var(--color-primary);
+        color: #fff;
+        border: none;
+        padding: 8px 20px;
+        margin-top: 10px;
+        cursor: pointer;
+        font-family: var(--font-display);
+        font-size: 14px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        border-radius: 4px;
+      }
+      .errbox .btn-retry:hover { opacity: 0.85; }
+      .load-progress {
+        width: 260px;
+        height: 4px;
+        background: var(--color-border);
+        border-radius: 4px;
+        overflow: hidden;
+        margin-top: 6px;
+      }
+      .load-progress-bar {
+        height: 100%;
+        width: 0%;
+        background: var(--color-primary);
+        transition: width 0.3s ease;
+        border-radius: 4px;
+      }
+
+      #dropZone {
+        max-width: 520px;
+        width: 90%;
+      }
+      #dropInner {
+        border: 2px dashed var(--color-border);
+        padding: 32px 24px;
+        text-align: center;
+        background: var(--color-container);
+        cursor: pointer;
+        border-radius: 8px;
+        transition: border-color 0.3s;
+      }
+      #dropInner:hover { border-color: var(--color-primary); }
+      #dropInner .drop-title {
+        font-family: var(--font-display);
+        font-size: 18px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--color-primary);
+        margin-bottom: 6px;
+      }
+      #dropInner .drop-text {
+        font-family: var(--font-body);
+        font-size: 13px;
+        color: var(--color-text-secondary);
+        line-height: 1.6;
+        margin-bottom: 14px;
+      }
+      #dropInner .drop-text b { color: var(--color-text-primary); font-weight: 600; }
+      #pickBtn {
+        padding: 10px 24px;
+        border: none;
+        background: var(--color-primary);
+        color: #fff;
+        font-family: var(--font-display);
+        font-size: 14px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        cursor: pointer;
+        border-radius: 4px;
+      }
+      #pickBtn:hover { opacity: 0.85; }
+
+      @media (max-width: 1200px) {
+        .charts-grid { grid-template-columns: 1fr 1fr; }
+        .insights { grid-template-columns: 1fr 1fr; }
+        .kpis { grid-template-columns: repeat(4, 1fr); }
+      }
+      @media (max-width: 980px) {
+        .charts-grid { grid-template-columns: 1fr 1fr; }
+        .insights { grid-template-columns: 1fr; }
+        .kpis { grid-template-columns: repeat(3, 1fr); }
+        h1 { font-size: 28px; }
+        #map { height: 380px; }
+      }
+      @media (max-width: 768px) {
+        .map-wrapper { flex-direction: column; }
+        #map { height: 380px; }
+        .legend-vertical {
+          width: 100%;
+          min-width: unset;
+          border-left: none;
+          border-top: 1px solid var(--color-border);
+          flex-direction: row;
+          flex-wrap: wrap;
+          padding: 12px 16px;
+          gap: 6px 16px;
+          font-size: 11px;
+          max-height: 300px;
+        }
+        .legend-vertical .legend-title { width: 100%; font-size: 14px; padding-bottom: 4px; margin-bottom: 2px; }
+        .legend-vertical .legend-section { flex: 1; min-width: 100px; }
+        .legend-vertical .legend-divider { display: none; }
+        .charts-grid { grid-template-columns: 1fr; }
+        .insights { grid-template-columns: 1fr; }
+        .kpis { grid-template-columns: repeat(2, 1fr); }
+      }
+    </style>
+  </head>
+  <body>
+  <div class="wrap" id="appWrap" style="display:none;">
+
+    <header>
+      <p class="eyebrow">Catastro de áreas verdes · Rancagua</p>
+      <h1>Áreas <em>Verdes</em> + <em style="color:#d6001c;">Parques</em></h1>
+      <p class="subtitle">
+        Distribución de áreas verdes y parques en la comuna de Rancagua.
+        <span id="filtroInfo" style="display:inline-block;margin-top:6px;"></span>
+      </p>
+    </header>
+
+    <div class="kpis" id="kpis">
+      <div class="kpi"><div class="label">🗺️ Total elementos</div><div class="value" id="kpiTotal">0</div><div class="sub" id="kpiTotalSub">todas las capas</div></div>
+      <div class="kpi highlight"><div class="label">🧩 Con juegos</div><div class="value" id="kpiJuegos">0</div><div class="sub">Juegos infantiles</div></div>
+      <div class="kpi success"><div class="label">🏋️ Con máquinas</div><div class="value" id="kpiMaquinas">0</div><div class="sub">Máquinas de ejercicio</div></div>
+      <div class="kpi accent"><div class="label">♿ Accesibles</div><div class="value" id="kpiAccesibilidad">0</div><div class="sub">Accesibilidad universal</div></div>
+      <div class="kpi"><div class="label">💡 Con alumbrado</div><div class="value" id="kpiAlumbrado">0</div><div class="sub">Alumbrado público</div></div>
+      <div class="kpi danger"><div class="label">🌿 Cobertura promedio</div><div class="value" id="kpiCobertura">0%</div><div class="sub">vegetación</div></div>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Mapa de Áreas Verdes y Parques</h2>
+          <span class="count" id="mapCount">0 elementos</span>
+        </div>
         
-        <div class="legend-vertical" id="legend">
-          <div class="legend-title">🗺️ Capas</div>
+        <div class="map-wrapper">
+          <div id="map" class="leaflet-container"></div>
           
-          <div class="legend-section" id="legendCapas">
-            <!-- Las capas se generan dinámicamente -->
-          </div>
-          
-          <hr class="legend-divider">
-          
-          <div class="legend-section">
-            <div class="legend-label">✅ Sí · ❌ No</div>
-            <div class="legend-item"><span class="legend-icon">🧩</span> Juegos infantiles</div>
-            <div class="legend-item"><span class="legend-icon">🏋️</span> Máquinas de ejercicio</div>
-            <div class="legend-item"><span class="legend-icon">♿</span> Accesibilidad universal</div>
-            <div class="legend-item"><span class="legend-icon">💡</span> Alumbrado público</div>
-            <div class="legend-item"><span class="legend-icon">🅿️</span> Estacionamientos</div>
-            <div class="legend-item"><span class="legend-icon">🪑</span> Mobiliario urbano</div>
-          </div>
-          
-          <hr class="legend-divider">
-          
-          <div class="legend-section">
-            <div class="legend-label">💡 Luminaria</div>
-            <div id="legendLuminaria"></div>
-          </div>
-          
-          <hr class="legend-divider">
-          
-          <div class="legend-section">
-            <div class="legend-label">🌳 Cobertura vegetal</div>
-            <div id="legendCobertura"></div>
-          </div>
-          
-          <hr class="legend-divider">
-          
-          <div class="legend-section" style="text-align:center;">
-            <div style="font-size:16px;font-weight:700;color:var(--color-primary);"><span id="legendTotal">0</span> elementos</div>
+          <div class="legend-vertical" id="legend">
+            <div class="legend-title">🗺️ Capas</div>
+            
+            <div class="legend-section" id="legendCapas">
+              <!-- Las capas se generan dinámicamente -->
+            </div>
+            
+            <hr class="legend-divider">
+            
+            <div class="legend-section">
+              <div class="legend-label">✅ Sí · ❌ No</div>
+              <div class="legend-item"><span class="legend-icon">🧩</span> Juegos infantiles</div>
+              <div class="legend-item"><span class="legend-icon">🏋️</span> Máquinas de ejercicio</div>
+              <div class="legend-item"><span class="legend-icon">♿</span> Accesibilidad universal</div>
+              <div class="legend-item"><span class="legend-icon">💡</span> Alumbrado público</div>
+              <div class="legend-item"><span class="legend-icon">🅿️</span> Estacionamientos</div>
+              <div class="legend-item"><span class="legend-icon">🪑</span> Mobiliario urbano</div>
+            </div>
+            
+            <hr class="legend-divider">
+            
+            <div class="legend-section">
+              <div class="legend-label">💡 Luminaria</div>
+              <div id="legendLuminaria"></div>
+            </div>
+            
+            <hr class="legend-divider">
+            
+            <div class="legend-section">
+              <div class="legend-label">🌳 Cobertura vegetal</div>
+              <div id="legendCobertura"></div>
+            </div>
+            
+            <hr class="legend-divider">
+            
+            <div class="legend-section" style="text-align:center;">
+              <div style="font-size:16px;font-weight:700;color:var(--color-primary);"><span id="legendTotal">0</span> elementos</div>
+            </div>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- GRÁFICOS -->
+    <div class="charts-grid">
+      <div class="chart-box">
+        <div class="chart-title">🧩 Juegos infantiles</div>
+        <div class="chart-stats">
+          <span class="stat-si">✅ Sí: <span id="statJuegosSi">0</span></span>
+          <span class="stat-no">❌ No: <span id="statJuegosNo">0</span></span>
+        </div>
+        <canvas id="chartJuegos"></canvas>
+        <div class="chart-subtitle">Distribución Sí / No</div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">🏋️ Máquinas de ejercicio</div>
+        <div class="chart-stats">
+          <span class="stat-si">✅ Sí: <span id="statMaquinasSi">0</span></span>
+          <span class="stat-no">❌ No: <span id="statMaquinasNo">0</span></span>
+        </div>
+        <canvas id="chartMaquinas"></canvas>
+        <div class="chart-subtitle">Distribución Sí / No</div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">♿ Accesibilidad universal</div>
+        <div class="chart-stats">
+          <span class="stat-si">✅ Sí: <span id="statAccesibilidadSi">0</span></span>
+          <span class="stat-no">❌ No: <span id="statAccesibilidadNo">0</span></span>
+        </div>
+        <canvas id="chartAccesibilidad"></canvas>
+        <div class="chart-subtitle">Distribución Sí / No</div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">💡 Alumbrado público</div>
+        <div class="chart-stats">
+          <span class="stat-si">✅ Sí: <span id="statAlumbradoSi">0</span></span>
+          <span class="stat-no">❌ No: <span id="statAlumbradoNo">0</span></span>
+        </div>
+        <canvas id="chartAlumbrado"></canvas>
+        <div class="chart-subtitle">Distribución Sí / No</div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">🅿️ Estacionamientos</div>
+        <div class="chart-stats">
+          <span class="stat-si">✅ Sí: <span id="statEstacionamientosSi">0</span></span>
+          <span class="stat-no">❌ No: <span id="statEstacionamientosNo">0</span></span>
+        </div>
+        <canvas id="chartEstacionamientos"></canvas>
+        <div class="chart-subtitle">Distribución Sí / No</div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">🪑 Mobiliario urbano</div>
+        <div class="chart-stats">
+          <span class="stat-si">✅ Sí: <span id="statMobiliarioSi">0</span></span>
+          <span class="stat-no">❌ No: <span id="statMobiliarioNo">0</span></span>
+        </div>
+        <canvas id="chartMobiliario"></canvas>
+        <div class="chart-subtitle">Distribución Sí / No</div>
+      </div>
+    </div>
+
+    <!-- GRÁFICOS ADICIONALES -->
+    <div class="charts-grid" style="margin-top:16px;">
+      <div class="chart-box" style="grid-column: span 2;">
+        <div class="chart-title">💡 Tipos de Luminaria</div>
+        <canvas id="chartLuminaria"></canvas>
+        <div class="chart-subtitle">Distribución por tipo de luminaria</div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">🌳 Cobertura Vegetal</div>
+        <div class="chart-stats" style="font-size:10px; flex-wrap: wrap; gap: 8px;">
+          <span style="color:var(--color-text-secondary);">Promedio: <b style="color:var(--color-primary);" id="statCoberturaPromedio">0%</b></span>
+          <span style="color:var(--color-text-secondary);">Sin cobertura (0%): <b style="color:var(--color-primary);" id="statCoberturaCero">0</b></span>
+          <span style="color:var(--color-text-secondary);">Con cobertura (>0%): <b style="color:#2e7d32;" id="statCoberturaConDato">0</b></span>
+        </div>
+        <canvas id="chartCobertura"></canvas>
+        <div class="chart-subtitle">Distribución de cobertura vegetal (incluye 0%)</div>
+      </div>
+    </div>
+
+    <!-- INSIGHTS -->
+    <div class="insights" id="insights">
+      <div class="insight">
+        <h3>🧩 Juegos infantiles</h3>
+        <p><span class="stat" id="insightJuegos">0</span> áreas tienen juegos infantiles (<span id="insightJuegosPct">0%</span>)</p>
+      </div>
+      <div class="insight">
+        <h3>🏋️ Máquinas de ejercicio</h3>
+        <p><span class="stat" id="insightMaquinas">0</span> áreas tienen máquinas de ejercicio (<span id="insightMaquinasPct">0%</span>)</p>
+      </div>
+      <div class="insight">
+        <h3>♿ Accesibilidad universal</h3>
+        <p><span class="stat" id="insightAccesibilidad">0</span> áreas son accesibles (<span id="insightAccesibilidadPct">0%</span>)</p>
+      </div>
+      <div class="insight">
+        <h3>💡 Alumbrado público</h3>
+        <p><span class="stat" id="insightAlumbrado">0</span> áreas tienen alumbrado (<span id="insightAlumbradoPct">0%</span>)</p>
+      </div>
+    </div>
+
+    <footer>
+      <span><b>Levantamiento y catastro:</b> Pablo Caroca - Daniel Espinoza</span>
+      <span id="footTotal">0 registros</span>
+      <span><b>Diseño visor:</b> Daniel Espinoza</span>
+    </footer>
+
   </div>
 
-  <!-- GRÁFICOS -->
-  <div class="charts-grid">
-    <div class="chart-box">
-      <div class="chart-title">🧩 Juegos infantiles</div>
-      <div class="chart-stats">
-        <span class="stat-si">✅ Sí: <span id="statJuegosSi">0</span></span>
-        <span class="stat-no">❌ No: <span id="statJuegosNo">0</span></span>
-      </div>
-      <canvas id="chartJuegos"></canvas>
-      <div class="chart-subtitle">Distribución Sí / No</div>
+  <div id="loadOverlay">
+    <div class="spinner" id="loadSpinner"></div>
+    <div id="loadMsg">Cargando capas...</div>
+    <div class="load-progress">
+      <div class="load-progress-bar" id="loadProgressBar"></div>
     </div>
-    <div class="chart-box">
-      <div class="chart-title">🏋️ Máquinas de ejercicio</div>
-      <div class="chart-stats">
-        <span class="stat-si">✅ Sí: <span id="statMaquinasSi">0</span></span>
-        <span class="stat-no">❌ No: <span id="statMaquinasNo">0</span></span>
+    <div id="loadErr"></div>
+    <div id="dropZone" style="display:none;">
+      <div id="dropInner">
+        <div class="drop-title">⚠️ Archivos no encontrados</div>
+        <div class="drop-text">
+          No se encontraron los archivos.<br />
+          Selecciona un archivo manualmente.
+        </div>
+        <button id="pickBtn">Seleccionar archivo</button>
+        <input type="file" id="fileInput" accept=".geojson,.json" style="display:none;" />
       </div>
-      <canvas id="chartMaquinas"></canvas>
-      <div class="chart-subtitle">Distribución Sí / No</div>
-    </div>
-    <div class="chart-box">
-      <div class="chart-title">♿ Accesibilidad universal</div>
-      <div class="chart-stats">
-        <span class="stat-si">✅ Sí: <span id="statAccesibilidadSi">0</span></span>
-        <span class="stat-no">❌ No: <span id="statAccesibilidadNo">0</span></span>
-      </div>
-      <canvas id="chartAccesibilidad"></canvas>
-      <div class="chart-subtitle">Distribución Sí / No</div>
-    </div>
-    <div class="chart-box">
-      <div class="chart-title">💡 Alumbrado público</div>
-      <div class="chart-stats">
-        <span class="stat-si">✅ Sí: <span id="statAlumbradoSi">0</span></span>
-        <span class="stat-no">❌ No: <span id="statAlumbradoNo">0</span></span>
-      </div>
-      <canvas id="chartAlumbrado"></canvas>
-      <div class="chart-subtitle">Distribución Sí / No</div>
-    </div>
-    <div class="chart-box">
-      <div class="chart-title">🅿️ Estacionamientos</div>
-      <div class="chart-stats">
-        <span class="stat-si">✅ Sí: <span id="statEstacionamientosSi">0</span></span>
-        <span class="stat-no">❌ No: <span id="statEstacionamientosNo">0</span></span>
-      </div>
-      <canvas id="chartEstacionamientos"></canvas>
-      <div class="chart-subtitle">Distribución Sí / No</div>
-    </div>
-    <div class="chart-box">
-      <div class="chart-title">🪑 Mobiliario urbano</div>
-      <div class="chart-stats">
-        <span class="stat-si">✅ Sí: <span id="statMobiliarioSi">0</span></span>
-        <span class="stat-no">❌ No: <span id="statMobiliarioNo">0</span></span>
-      </div>
-      <canvas id="chartMobiliario"></canvas>
-      <div class="chart-subtitle">Distribución Sí / No</div>
     </div>
   </div>
 
-  <!-- GRÁFICOS ADICIONALES -->
-  <div class="charts-grid" style="margin-top:16px;">
-    <div class="chart-box" style="grid-column: span 2;">
-      <div class="chart-title">💡 Tipos de Luminaria</div>
-      <canvas id="chartLuminaria"></canvas>
-      <div class="chart-subtitle">Distribución por tipo de luminaria</div>
-    </div>
-    <div class="chart-box">
-      <div class="chart-title">🌳 Cobertura Vegetal</div>
-      <div class="chart-stats" style="font-size:10px; flex-wrap: wrap; gap: 8px;">
-        <span style="color:var(--color-text-secondary);">Promedio: <b style="color:var(--color-primary);" id="statCoberturaPromedio">0%</b></span>
-        <span style="color:var(--color-text-secondary);">Sin cobertura (0%): <b style="color:var(--color-primary);" id="statCoberturaCero">0</b></span>
-        <span style="color:var(--color-text-secondary);">Con cobertura (>0%): <b style="color:#2e7d32;" id="statCoberturaConDato">0</b></span>
-      </div>
-      <canvas id="chartCobertura"></canvas>
-      <div class="chart-subtitle">Distribución de cobertura vegetal (incluye 0%)</div>
-    </div>
-  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 
-  <!-- INSIGHTS -->
-  <div class="insights" id="insights">
-    <div class="insight">
-      <h3>🧩 Juegos infantiles</h3>
-      <p><span class="stat" id="insightJuegos">0</span> áreas tienen juegos infantiles (<span id="insightJuegosPct">0%</span>)</p>
-    </div>
-    <div class="insight">
-      <h3>🏋️ Máquinas de ejercicio</h3>
-      <p><span class="stat" id="insightMaquinas">0</span> áreas tienen máquinas de ejercicio (<span id="insightMaquinasPct">0%</span>)</p>
-    </div>
-    <div class="insight">
-      <h3>♿ Accesibilidad universal</h3>
-      <p><span class="stat" id="insightAccesibilidad">0</span> áreas son accesibles (<span id="insightAccesibilidadPct">0%</span>)</p>
-    </div>
-    <div class="insight">
-      <h3>💡 Alumbrado público</h3>
-      <p><span class="stat" id="insightAlumbrado">0</span> áreas tienen alumbrado (<span id="insightAlumbradoPct">0%</span>)</p>
-    </div>
-  </div>
+  <script>
+  // ============================================================
+  //  CONFIGURACIÓN DE CAPAS - ACTUALIZADA CON TUS ARCHIVOS
+  // ============================================================
 
-  <footer>
-    <span><b>Levantamiento y catastro:</b> Pablo Caroca - Daniel Espinoza</span>
-    <span id="footTotal">0 registros</span>
-    <span><b>Diseño visor:</b> Daniel Espinoza</span>
-  </footer>
-
-</div>
-
-<div id="loadOverlay">
-  <div class="spinner" id="loadSpinner"></div>
-  <div id="loadMsg">Cargando capas...</div>
-  <div class="load-progress">
-    <div class="load-progress-bar" id="loadProgressBar"></div>
-  </div>
-  <div id="loadErr"></div>
-  <div id="dropZone" style="display:none;">
-    <div id="dropInner">
-      <div class="drop-title">⚠️ Archivos no encontrados</div>
-      <div class="drop-text">
-        No se encontraron los archivos.<br />
-        Selecciona un archivo manualmente.
-      </div>
-      <button id="pickBtn">Seleccionar archivo</button>
-      <input type="file" id="fileInput" accept=".geojson,.json" style="display:none;" />
-    </div>
-  </div>
-</div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-
-<script>
-// ============================================================
-//  CONFIGURACIÓN DE CAPAS - ACTUALIZADA CON TUS ARCHIVOS
-// ============================================================
-
-const CAPAS_CONFIG = {
-  'parques': {
-    urls: ['data/Parques.geojson.json'],
-    nombre: 'Parques',
-    icono: '🏞️',
-    color: '#d6001c',
-    fillColor: '#ff6b6b',
-    visible: true,
-    estilo: {
+  const CAPAS_CONFIG = {
+    'parques': {
+      urls: ['data/Parques.geojson.json'],
+      nombre: 'Parques',
+      icono: '🏞️',
       color: '#d6001c',
-      weight: 3,
-      opacity: 0.8,
-      fillOpacity: 0.25
-    }
-  },
-  'areas_verdes': {
-    urls: ['data/av3.geojson.json'],
-    nombre: 'Áreas Verdes',
-    icono: '🌳',
-    color: '#4caf50',
-    fillColor: '#4caf50',
-    visible: true,
-    estilo: {
+      fillColor: '#ff6b6b',
+      visible: true,
+      estilo: {
+        color: '#d6001c',
+        weight: 3,
+        opacity: 0.8,
+        fillOpacity: 0.25
+      }
+    },
+    'areas_verdes': {
+      urls: ['data/av3.geojson.json'],
+      nombre: 'Áreas Verdes',
+      icono: '🌳',
       color: '#4caf50',
-      weight: 2,
-      opacity: 0.8,
-      fillOpacity: 0.4
-    }
-  }
-};
-
-// ============================================================
-//  VARIABLES GLOBALES
-// ============================================================
-
-let capas = {};
-let capasLayer = {};
-let map = null;
-let mapInitialized = false;
-let charts = {};
-let loadAttempts = 0;
-const MAX_LOAD_ATTEMPTS = 3;
-let capasActivas = new Set();
-
-// ============================================================
-//  FUNCIONES AUXILIARES
-// ============================================================
-
-function fmt(n) { 
-  if (n === undefined || n === null) return '0';
-  return n.toLocaleString('es-CL'); 
-}
-
-function pct(n, total) {
-  if (total === 0) return '0%';
-  return Math.round((n / total) * 100) + '%';
-}
-
-function parseSiNo(val) {
-  if (val === undefined || val === null) return false;
-  if (typeof val === 'boolean') return val;
-  if (typeof val === 'string') {
-    const v = val.trim();
-    const lower = v.toLowerCase();
-    return lower === 'si' || lower === 'sí' || lower === 'true' || lower === '1' || lower === 'yes' || lower === 'x';
-  }
-  if (typeof val === 'number') return val === 1;
-  return false;
-}
-
-function parseCobertura(val) {
-  if (val === undefined || val === null || val === '') return 0;
-  if (typeof val === 'number') return Math.min(Math.max(val, 0), 100);
-  if (typeof val === 'string') {
-    const trimmed = val.trim();
-    if (trimmed === '' || trimmed === '0' || trimmed === '0%') return 0;
-    
-    if (trimmed.includes('-')) {
-      const parts = trimmed.split('-');
-      if (parts.length === 2) {
-        const a = parseInt(parts[0].trim());
-        const b = parseInt(parts[1].trim());
-        if (!isNaN(a) && !isNaN(b)) {
-          return Math.round((a + b) / 2);
-        }
+      fillColor: '#4caf50',
+      visible: true,
+      estilo: {
+        color: '#4caf50',
+        weight: 2,
+        opacity: 0.8,
+        fillOpacity: 0.4
       }
     }
-    
-    if (trimmed.includes('%')) {
-      const clean = trimmed.replace('%', '').trim();
-      if (clean.includes('-')) {
-        const parts = clean.split('-');
+  };
+
+  // ============================================================
+  //  VARIABLES GLOBALES
+  // ============================================================
+
+  let capas = {};
+  let capasLayer = {};
+  let map = null;
+  let mapInitialized = false;
+  let charts = {};
+  let loadAttempts = 0;
+  const MAX_LOAD_ATTEMPTS = 3;
+  let capasActivas = new Set();
+
+  // ============================================================
+  //  FUNCIONES AUXILIARES
+  // ============================================================
+
+  function fmt(n) { 
+    if (n === undefined || n === null) return '0';
+    return n.toLocaleString('es-CL'); 
+  }
+
+  function pct(n, total) {
+    if (total === 0) return '0%';
+    return Math.round((n / total) * 100) + '%';
+  }
+
+  function parseSiNo(val) {
+    if (val === undefined || val === null) return false;
+    if (typeof val === 'boolean') return val;
+    if (typeof val === 'string') {
+      const v = val.trim();
+      const lower = v.toLowerCase();
+      return lower === 'si' || lower === 'sí' || lower === 'true' || lower === '1' || lower === 'yes' || lower === 'x';
+    }
+    if (typeof val === 'number') return val === 1;
+    return false;
+  }
+
+  function parseCobertura(val) {
+    if (val === undefined || val === null || val === '') return 0;
+    if (typeof val === 'number') return Math.min(Math.max(val, 0), 100);
+    if (typeof val === 'string') {
+      const trimmed = val.trim();
+      if (trimmed === '' || trimmed === '0' || trimmed === '0%') return 0;
+      
+      if (trimmed.includes('-')) {
+        const parts = trimmed.split('-');
         if (parts.length === 2) {
           const a = parseInt(parts[0].trim());
           const b = parseInt(parts[1].trim());
@@ -889,786 +876,800 @@ function parseCobertura(val) {
           }
         }
       }
-      const num = parseFloat(clean);
+      
+      if (trimmed.includes('%')) {
+        const clean = trimmed.replace('%', '').trim();
+        if (clean.includes('-')) {
+          const parts = clean.split('-');
+          if (parts.length === 2) {
+            const a = parseInt(parts[0].trim());
+            const b = parseInt(parts[1].trim());
+            if (!isNaN(a) && !isNaN(b)) {
+              return Math.round((a + b) / 2);
+            }
+          }
+        }
+        const num = parseFloat(clean);
+        if (!isNaN(num)) return Math.min(Math.max(num, 0), 100);
+      }
+      
+      const num = parseFloat(trimmed);
       if (!isNaN(num)) return Math.min(Math.max(num, 0), 100);
     }
-    
-    const num = parseFloat(trimmed);
-    if (!isNaN(num)) return Math.min(Math.max(num, 0), 100);
+    return 0;
   }
-  return 0;
-}
 
-function hasValidCoordinates(geometry) {
-  if (!geometry || !geometry.coordinates) return false;
-  try {
-    const coords = geometry.coordinates;
-    if (geometry.type === 'Polygon' && coords.length > 0 && coords[0].length > 0) {
-      const firstPoint = coords[0][0];
-      if (firstPoint && typeof firstPoint[0] === 'number' && typeof firstPoint[1] === 'number') {
-        return !isNaN(firstPoint[0]) && !isNaN(firstPoint[1]);
-      }
-    }
-    if (geometry.type === 'MultiPolygon' && coords.length > 0 && coords[0].length > 0 && coords[0][0].length > 0) {
-      const firstPoint = coords[0][0][0];
-      if (firstPoint && typeof firstPoint[0] === 'number' && typeof firstPoint[1] === 'number') {
-        return !isNaN(firstPoint[0]) && !isNaN(firstPoint[1]);
-      }
-    }
-    return false;
-  } catch (e) {
-    return false;
-  }
-}
-
-function getFeaturesFiltradas() {
-  let all = [];
-  for (const [key, capa] of Object.entries(capas)) {
-    if (capasActivas.has(key) && capa.features) {
-      all = all.concat(capa.features);
-    }
-  }
-  return all;
-}
-
-function getNombreCapasActivas() {
-  const nombres = [];
-  for (const key of capasActivas) {
-    if (capas[key]) {
-      nombres.push(capas[key].config.icono + ' ' + capas[key].config.nombre);
-    }
-  }
-  return nombres.join(' + ') || 'Ninguna';
-}
-
-// ============================================================
-//  CARGA DE MÚLTIPLES CAPAS
-// ============================================================
-
-async function cargarTodasLasCapas() {
-  const progressBar = document.getElementById('loadProgressBar');
-  const totalCapas = Object.keys(CAPAS_CONFIG).length;
-  let cargadas = 0;
-  
-  try {
-    loadAttempts++;
-    document.getElementById('loadMsg').innerHTML = `Cargando capas... (intento ${loadAttempts})`;
-    progressBar.style.width = '10%';
-    
-    for (const [key, config] of Object.entries(CAPAS_CONFIG)) {
-      let data = null;
-      let loaded = false;
-      
-      for (const url of config.urls) {
-        try {
-          document.getElementById('loadMsg').innerHTML = 
-            `Cargando ${config.icono} ${config.nombre}... (${cargadas + 1}/${totalCapas})`;
-          
-          const res = await fetch(url).catch(() => null);
-          if (res && res.ok) {
-            data = await res.json();
-            loaded = true;
-            console.log(`✅ ${config.icono} ${config.nombre} cargado desde ${url}`);
-            break;
-          }
-        } catch (err) {
-          console.log(`⚠️ No se pudo cargar ${config.nombre} desde ${url}`);
-        }
-      }
-      
-      if (loaded && data) {
-        capas[key] = {
-          data: data,
-          config: config,
-          features: data.features || []
-        };
-        console.log(`📊 ${config.icono} ${config.nombre}: ${capas[key].features.length} elementos`);
-        if (config.visible !== false) {
-          capasActivas.add(key);
-        }
-      } else {
-        console.warn(`❌ No se pudo cargar ${config.nombre}`);
-        capas[key] = {
-          data: null,
-          config: config,
-          features: []
-        };
-      }
-      
-      cargadas++;
-      const progreso = Math.round((cargadas / totalCapas) * 90);
-      progressBar.style.width = `${10 + progreso}%`;
-    }
-    
-    const cargadasExitosas = Object.values(capas).filter(c => c.features.length > 0).length;
-    document.getElementById('loadMsg').innerHTML = `✅ ${cargadasExitosas}/${totalCapas} capas cargadas`;
-    progressBar.style.width = '100%';
-    
-    setTimeout(() => {
-      document.getElementById('loadOverlay').style.display = 'none';
-      document.getElementById('appWrap').style.display = 'block';
-      inicializarAppConCapas();
-    }, 500);
-    
-  } catch (err) {
-    console.error('Error al cargar capas:', err);
-    if (loadAttempts < MAX_LOAD_ATTEMPTS) {
-      document.getElementById('loadMsg').innerHTML = `⚠️ Error. Reintentando (${loadAttempts}/${MAX_LOAD_ATTEMPTS})…`;
-      setTimeout(() => cargarTodasLasCapas(), 2000);
-    } else {
-      document.getElementById('loadSpinner').style.display = 'none';
-      document.getElementById('loadMsg').style.display = 'none';
-      document.getElementById('dropZone').style.display = 'block';
-      setupManualLoad();
-    }
-  }
-}
-
-function setupManualLoad() {
-  const inner = document.getElementById('dropInner');
-  const input = document.getElementById('fileInput');
-  document.getElementById('pickBtn').addEventListener('click', e => { e.stopPropagation(); input.click(); });
-  inner.addEventListener('click', () => input.click());
-  input.addEventListener('change', () => {
-    if (input.files.length) handleManualFile(input.files[0]);
-  });
-  ['dragover','dragenter'].forEach(ev => inner.addEventListener(ev, e => {
-    e.preventDefault(); inner.style.borderColor = 'var(--color-primary)';
-  }));
-  ['dragleave','drop'].forEach(ev => inner.addEventListener(ev, e => {
-    e.preventDefault(); inner.style.borderColor = '';
-  }));
-  inner.addEventListener('drop', e => {
-    if (e.dataTransfer.files.length) handleManualFile(e.dataTransfer.files[0]);
-  });
-}
-
-function handleManualFile(file) {
-  const reader = new FileReader();
-  reader.onload = () => {
+  function hasValidCoordinates(geometry) {
+    if (!geometry || !geometry.coordinates) return false;
     try {
-      const data = JSON.parse(reader.result);
-      let assigned = false;
-      for (const [key, capa] of Object.entries(capas)) {
-        if (!capa.data) {
+      const coords = geometry.coordinates;
+      if (geometry.type === 'Polygon' && coords.length > 0 && coords[0].length > 0) {
+        const firstPoint = coords[0][0];
+        if (firstPoint && typeof firstPoint[0] === 'number' && typeof firstPoint[1] === 'number') {
+          return !isNaN(firstPoint[0]) && !isNaN(firstPoint[1]);
+        }
+      }
+      if (geometry.type === 'MultiPolygon' && coords.length > 0 && coords[0].length > 0 && coords[0][0].length > 0) {
+        const firstPoint = coords[0][0][0];
+        if (firstPoint && typeof firstPoint[0] === 'number' && typeof firstPoint[1] === 'number') {
+          return !isNaN(firstPoint[0]) && !isNaN(firstPoint[1]);
+        }
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function getFeaturesFiltradas() {
+    let all = [];
+    for (const [key, capa] of Object.entries(capas)) {
+      if (capasActivas.has(key) && capa.features) {
+        all = all.concat(capa.features);
+      }
+    }
+    return all;
+  }
+
+  function getNombreCapasActivas() {
+    const nombres = [];
+    for (const key of capasActivas) {
+      if (capas[key]) {
+        nombres.push(capas[key].config.icono + ' ' + capas[key].config.nombre);
+      }
+    }
+    return nombres.join(' + ') || 'Ninguna';
+  }
+
+  // ============================================================
+  //  CARGA DE MÚLTIPLES CAPAS
+  // ============================================================
+
+  async function cargarTodasLasCapas() {
+    const progressBar = document.getElementById('loadProgressBar');
+    const totalCapas = Object.keys(CAPAS_CONFIG).length;
+    let cargadas = 0;
+    
+    try {
+      loadAttempts++;
+      document.getElementById('loadMsg').innerHTML = `Cargando capas... (intento ${loadAttempts})`;
+      progressBar.style.width = '10%';
+      
+      for (const [key, config] of Object.entries(CAPAS_CONFIG)) {
+        let data = null;
+        let loaded = false;
+        
+        for (const url of config.urls) {
+          try {
+            document.getElementById('loadMsg').innerHTML = 
+              `Cargando ${config.icono} ${config.nombre}... (${cargadas + 1}/${totalCapas})`;
+            
+            const res = await fetch(url).catch(() => null);
+            if (res && res.ok) {
+              data = await res.json();
+              loaded = true;
+              console.log(`✅ ${config.icono} ${config.nombre} cargado desde ${url}`);
+              break;
+            }
+          } catch (err) {
+            console.log(`⚠️ No se pudo cargar ${config.nombre} desde ${url}`);
+          }
+        }
+        
+        if (loaded && data) {
           capas[key] = {
             data: data,
-            config: capa.config,
+            config: config,
             features: data.features || []
           };
-          capasActivas.add(key);
-          assigned = true;
-          break;
+          console.log(`📊 ${config.icono} ${config.nombre}: ${capas[key].features.length} elementos`);
+          if (config.visible !== false) {
+            capasActivas.add(key);
+          }
+        } else {
+          console.warn(`❌ No se pudo cargar ${config.nombre}`);
+          capas[key] = {
+            data: null,
+            config: config,
+            features: []
+          };
         }
+        
+        cargadas++;
+        const progreso = Math.round((cargadas / totalCapas) * 90);
+        progressBar.style.width = `${10 + progreso}%`;
       }
-      if (!assigned) {
-        capas['manual'] = {
-          data: data,
-          config: {
-            nombre: 'Manual',
-            icono: '📁',
-            color: '#666',
-            fillColor: '#999',
-            estilo: { color: '#666', weight: 2, opacity: 0.8, fillOpacity: 0.4 }
-          },
-          features: data.features || []
-        };
-        capasActivas.add('manual');
-      }
-      document.getElementById('loadOverlay').style.display = 'none';
-      document.getElementById('appWrap').style.display = 'block';
-      inicializarAppConCapas();
+      
+      const cargadasExitosas = Object.values(capas).filter(c => c.features.length > 0).length;
+      document.getElementById('loadMsg').innerHTML = `✅ ${cargadasExitosas}/${totalCapas} capas cargadas`;
+      progressBar.style.width = '100%';
+      
+      setTimeout(() => {
+        document.getElementById('loadOverlay').style.display = 'none';
+        document.getElementById('appWrap').style.display = 'block';
+        inicializarAppConCapas();
+      }, 500);
+      
     } catch (err) {
+      console.error('Error al cargar capas:', err);
+      if (loadAttempts < MAX_LOAD_ATTEMPTS) {
+        document.getElementById('loadMsg').innerHTML = `⚠️ Error. Reintentando (${loadAttempts}/${MAX_LOAD_ATTEMPTS})…`;
+        setTimeout(() => cargarTodasLasCapas(), 2000);
+      } else {
+        document.getElementById('loadSpinner').style.display = 'none';
+        document.getElementById('loadMsg').style.display = 'none';
+        document.getElementById('dropZone').style.display = 'block';
+        setupManualLoad();
+      }
+    }
+  }
+
+  function setupManualLoad() {
+    const inner = document.getElementById('dropInner');
+    const input = document.getElementById('fileInput');
+    document.getElementById('pickBtn').addEventListener('click', e => { e.stopPropagation(); input.click(); });
+    inner.addEventListener('click', () => input.click());
+    input.addEventListener('change', () => {
+      if (input.files.length) handleManualFile(input.files[0]);
+    });
+    ['dragover','dragenter'].forEach(ev => inner.addEventListener(ev, e => {
+      e.preventDefault(); inner.style.borderColor = 'var(--color-primary)';
+    }));
+    ['dragleave','drop'].forEach(ev => inner.addEventListener(ev, e => {
+      e.preventDefault(); inner.style.borderColor = '';
+    }));
+    inner.addEventListener('drop', e => {
+      if (e.dataTransfer.files.length) handleManualFile(e.dataTransfer.files[0]);
+    });
+  }
+
+  function handleManualFile(file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result);
+        let assigned = false;
+        for (const [key, capa] of Object.entries(capas)) {
+          if (!capa.data) {
+            capas[key] = {
+              data: data,
+              config: capa.config,
+              features: data.features || []
+            };
+            capasActivas.add(key);
+            assigned = true;
+            break;
+          }
+        }
+        if (!assigned) {
+          capas['manual'] = {
+            data: data,
+            config: {
+              nombre: 'Manual',
+              icono: '📁',
+              color: '#666',
+              fillColor: '#999',
+              estilo: { color: '#666', weight: 2, opacity: 0.8, fillOpacity: 0.4 }
+            },
+            features: data.features || []
+          };
+          capasActivas.add('manual');
+        }
+        document.getElementById('loadOverlay').style.display = 'none';
+        document.getElementById('appWrap').style.display = 'block';
+        inicializarAppConCapas();
+      } catch (err) {
+        document.getElementById('loadErr').innerHTML = `
+          <div class="errbox">
+            <div style="font-weight:700;color:var(--color-primary);margin-bottom:6px;font-size:16px;">❌ Error</div>
+            El archivo no es un GeoJSON válido: ${err.message}
+            <button class="btn-retry" onclick="location.reload()">🔄 Reintentar</button>
+          </div>
+        `;
+      }
+    };
+    reader.onerror = () => {
       document.getElementById('loadErr').innerHTML = `
         <div class="errbox">
           <div style="font-weight:700;color:var(--color-primary);margin-bottom:6px;font-size:16px;">❌ Error</div>
-          El archivo no es un GeoJSON válido: ${err.message}
+          No se pudo leer el archivo.
           <button class="btn-retry" onclick="location.reload()">🔄 Reintentar</button>
         </div>
       `;
-    }
-  };
-  reader.onerror = () => {
-    document.getElementById('loadErr').innerHTML = `
-      <div class="errbox">
-        <div style="font-weight:700;color:var(--color-primary);margin-bottom:6px;font-size:16px;">❌ Error</div>
-        No se pudo leer el archivo.
-        <button class="btn-retry" onclick="location.reload()">🔄 Reintentar</button>
-      </div>
-    `;
-  };
-  reader.readAsText(file);
-}
-
-// ============================================================
-//  INICIALIZAR CON MÚLTIPLES CAPAS
-// ============================================================
-
-function inicializarAppConCapas() {
-  console.log('🚀 Inicializando aplicación con', Object.keys(capas).length, 'capas');
-  
-  if (!mapInitialized) {
-    map = L.map('map', { scrollWheelZoom: true, preferCanvas: true });
-    mapInitialized = true;
-    
-    const Esri_WorldGrayCanvas = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
-      attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
-      minZoom: 4,
-      maxZoom: 19
-    }).addTo(map);
-    
-    const Esri_WorldImagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-      attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-    });
-    
-    const baseMaps = { 'Esri gris': Esri_WorldGrayCanvas, 'Esri satelital': Esri_WorldImagery };
-    
-    L.control.layers(baseMaps, null, { position: 'topright', collapsed: false }).addTo(map);
+    };
+    reader.readAsText(file);
   }
-  
-  for (const [key, capa] of Object.entries(capas)) {
-    const group = L.layerGroup();
-    capasLayer[key] = group;
+
+  // ============================================================
+  //  INICIALIZAR CON MÚLTIPLES CAPAS
+  // ============================================================
+
+  function inicializarAppConCapas() {
+    console.log('🚀 Inicializando aplicación con', Object.keys(capas).length, 'capas');
     
-    if (capa.features && capa.features.length > 0) {
-      renderizarCapa(key, capa, group);
-      if (capasActivas.has(key)) {
-        group.addTo(map);
-      }
-    }
-  }
-  
-  configurarChartJS();
-  actualizarTodosLosIndicadores();
-  actualizarLeyendaCapas();
-  actualizarLeyendaAtributos();
-  actualizarInfoFiltro();
-  ajustarVistaMapa();
-  
-  setTimeout(() => {
-    map.invalidateSize();
-  }, 300);
-}
-
-// ============================================================
-//  RENDERIZAR CADA CAPA - CON ICONOS EN POPUPS
-// ============================================================
-
-function renderizarCapa(key, capa, group) {
-  const { features, config } = capa;
-  
-  // Mapeo de atributos a iconos y etiquetas amigables
-  const MAPA_ATRIBUTOS = {
-    'Juegos_inf': { icono: '🧩', label: 'Juegos infantiles' },
-    'Máquinas': { icono: '🏋️', label: 'Máquinas de ejercicio' },
-    'Accesibili': { icono: '♿', label: 'Accesibilidad universal' },
-    'Alumbrado': { icono: '💡', label: 'Alumbrado público' },
-    'Estacionam': { icono: '🅿️', label: 'Estacionamientos' },
-    'Mobiliario': { icono: '🪑', label: 'Mobiliario urbano' },
-    'Luminaria': { icono: '💡', label: 'Tipo de luminaria' },
-    'Cobertura': { icono: '🌳', label: 'Cobertura vegetal' },
-    'Cobertur_1': { icono: '🌳', label: 'Cobertura vegetal' },
-    'Cobertura_1': { icono: '🌳', label: 'Cobertura vegetal' },
-    'TIPO': { icono: '🏷️', label: 'Tipo' },
-    'USO': { icono: '🏷️', label: 'Uso' },
-    'Localizaci': { icono: '📍', label: 'Localización' },
-    'Observacio': { icono: '📝', label: 'Observaciones' },
-    'OBS': { icono: '📝', label: 'Observaciones' },
-    'Estado_del': { icono: '📊', label: 'Estado' },
-    'SUP_M2': { icono: '📐', label: 'Superficie (m²)' },
-    'NOMBRE': { icono: '🏷️', label: 'Nombre' },
-    'Nombre_1': { icono: '🏷️', label: 'Nombre' },
-    'DIRECCION': { icono: '📍', label: 'Dirección' }
-  };
-  
-  features.forEach(f => {
-    if (!hasValidCoordinates(f.geometry)) return;
-    
-    const layer = L.geoJSON(f, {
-      style: config.estilo,
-      onEachFeature: function(feat, layer) {
-        const props = feat.properties;
-        // Buscar nombre en múltiples campos
-        const nombre = props.NOMBRE || props.Nombre_1 || props.IDENTIFICA || props.nombre || 'Sin nombre';
-        const direccion = props.DIRECCION || props.Localizaci || '';
-        
-        let propRows = '';
-        const excludeKeys = ['Nombre_1', 'IDENTIFICA', 'nombre', 'NOMBRE', 'geometry', 'OBJECTID', 'CDT', 'ZONA_PROP', 'ZONA_PRC', 'ID_TEMA', 'TEMA', 'SIT_IPT', 'SUB_TEMA', 'PLANO__VER', 'PRC_M23', 'N°', 'Marca_temp', 'Shape_Length', 'Shape_Area', 'FID', 'ESTADO', 'OBSERVACIO', 'SUP', 'DECRETO_N'];
-        
-        // Campos prioritarios en orden
-        const camposPrioritarios = ['NOMBRE', 'DIRECCION', 'Localizaci', 'TIPO', 'USO', 'Juegos_inf', 'Máquinas', 'Accesibili', 'Alumbrado', 'Estacionam', 'Mobiliario', 'Luminaria', 'Cobertura', 'Cobertur_1', 'Cobertura_1', 'Observacio', 'OBS', 'Estado_del', 'SUP_M2'];
-        
-        camposPrioritarios.forEach(key => {
-          if (props[key] !== undefined && props[key] !== null && props[key] !== '' && props[key] !== ' ') {
-            const valor = props[key];
-            const info = MAPA_ATRIBUTOS[key] || { icono: '📌', label: key };
-            let display = valor;
-            
-            if (typeof valor === 'string') {
-              const lower = valor.toLowerCase();
-              if (lower === 'si' || lower === 'sí' || lower === 'true' || lower === '1' || lower === 'yes' || lower === 'x') {
-                display = '✅ Sí';
-              } else if (lower === 'no' || lower === 'false' || lower === '0') {
-                display = '❌ No';
-              } else if (lower === 'sin dato' || lower === '') {
-                display = '—';
-              }
-            }
-            
-            if (key === 'Cobertura' || key === 'Cobertur_1' || key === 'Cobertura_1') {
-              const coberturaNum = parseCobertura(valor);
-              display = `${coberturaNum}%`;
-            }
-            
-            if (key === 'NOMBRE' && valor === ' ') return;
-            
-            propRows += `<div class="pop-row"><b>${info.icono} ${info.label}</b><span>${display}</span></div>`;
-          }
-        });
-        
-        // Resto de propiedades
-        Object.entries(props)
-          .filter(([k]) => !excludeKeys.includes(k) && !camposPrioritarios.includes(k))
-          .filter(([k, v]) => v !== undefined && v !== null && v !== '' && v !== ' ')
-          .forEach(([k, v]) => {
-            const info = MAPA_ATRIBUTOS[k] || { icono: '📌', label: k };
-            let display = v;
-            if (typeof v === 'string') {
-              const lower = v.toLowerCase();
-              if (lower === 'si' || lower === 'sí' || lower === 'true' || lower === '1' || lower === 'yes' || lower === 'x') {
-                display = '✅ Sí';
-              } else if (lower === 'no' || lower === 'false' || lower === '0') {
-                display = '❌ No';
-              }
-            }
-            propRows += `<div class="pop-row"><b>${info.icono} ${info.label}</b><span>${display}</span></div>`;
-          });
-        
-        const titulo = nombre !== 'Sin nombre' ? `${config.icono} ${nombre}` : `${config.icono} ${config.nombre}`;
-        
-        layer.bindPopup(`
-          <div class="pop-title" style="color:${config.color}">${titulo}</div>
-          ${direccion ? `<div class="pop-row"><b>📍 Dirección</b><span>${direccion}</span></div>` : ''}
-          <div class="pop-row"><b>📂 Capa</b><span>${config.nombre}</span></div>
-          ${propRows}
-        `);
-      }
-    });
-    
-    group.addLayer(layer);
-  });
-}
-
-// ============================================================
-//  CONFIGURAR CHART.JS
-// ============================================================
-
-function configurarChartJS() {
-  Chart.defaults.font.family = "'Montserrat', sans-serif";
-  Chart.defaults.color = '#4a4b54';
-  Chart.defaults.font.size = 10;
-  Chart.defaults.font.weight = '400';
-
-  const chartConfig = {
-    type: 'bar',
-    options: {
-      animation: { duration: 280 },
-      plugins: { legend: { display: false } },
-      scales: {
-        y: { 
-          grid: { color: '#e8eaf0' }, 
-          ticks: { color: '#4a4b54', font: { size: 9 } }, 
-          beginAtZero: true
-        },
-        x: { 
-          grid: { display: false }, 
-          ticks: { color: '#4a4b54', font: { size: 10, weight: '500' } } 
-        }
-      }
-    }
-  };
-
-  const campos = [
-    { id: 'chartJuegos', key: 'Juegos_inf', colorSi: '#2e7d32', colorNo: '#b0b5c7', statSi: 'statJuegosSi', statNo: 'statJuegosNo' },
-    { id: 'chartMaquinas', key: 'Máquinas', colorSi: '#d6001c', colorNo: '#b0b5c7', statSi: 'statMaquinasSi', statNo: 'statMaquinasNo' },
-    { id: 'chartAccesibilidad', key: 'Accesibili', colorSi: '#42a5f5', colorNo: '#b0b5c7', statSi: 'statAccesibilidadSi', statNo: 'statAccesibilidadNo' },
-    { id: 'chartAlumbrado', key: 'Alumbrado', colorSi: '#ff8f00', colorNo: '#b0b5c7', statSi: 'statAlumbradoSi', statNo: 'statAlumbradoNo' },
-    { id: 'chartEstacionamientos', key: 'Estacionam', colorSi: '#6a1b9a', colorNo: '#b0b5c7', statSi: 'statEstacionamientosSi', statNo: 'statEstacionamientosNo' },
-    { id: 'chartMobiliario', key: 'Mobiliario', colorSi: '#00838f', colorNo: '#b0b5c7', statSi: 'statMobiliarioSi', statNo: 'statMobiliarioNo' }
-  ];
-
-  campos.forEach(campo => {
-    const canvas = document.getElementById(campo.id);
-    if (canvas) {
-      const ctx = canvas.getContext('2d');
-      charts[campo.id] = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: ['✅ Sí', '❌ No'],
-          datasets: [{
-            data: [0, 0],
-            backgroundColor: [campo.colorSi, campo.colorNo],
-            borderRadius: 4,
-            maxBarThickness: 40
-          }]
-        },
-        options: chartConfig.options
+    if (!mapInitialized) {
+      map = L.map('map', { scrollWheelZoom: true, preferCanvas: true });
+      mapInitialized = true;
+      
+      const Esri_WorldGrayCanvas = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+	attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community',
+        minZoom: 2,
+        maxZoom: 19,
+      }).addTo(map);
+      
+      const Esri_WorldImagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+       minZoom: 2,
+        maxZoom: 19,
       });
+      
+      const baseMaps = { 'Esri Gris': Esri_WorldGrayCanvas, 'Esri Satelital': Esri_WorldImagery };
+      
+      L.control.layers(baseMaps, null, { position: 'topright', collapsed: false }).addTo(map);
     }
-  });
-
-  const ctxLuminaria = document.getElementById('chartLuminaria').getContext('2d');
-  charts['chartLuminaria'] = new Chart(ctxLuminaria, {
-    type: 'doughnut',
-    data: {
-      labels: [],
-      datasets: [{
-        data: [],
-        backgroundColor: ['#2e7d32', '#d6001c', '#ff8f00', '#42a5f5', '#b0b5c7', '#6a1b9a', '#00838f'],
-        borderColor: '#ffffff',
-        borderWidth: 2
-      }]
-    },
-    options: {
-      animation: { duration: 280 },
-      plugins: {
-        legend: { 
-          position: 'bottom', 
-          labels: { color: '#4a4b54', font: { size: 9, weight: '400' }, padding: 6, boxWidth: 10 } 
+    
+    for (const [key, capa] of Object.entries(capas)) {
+      const group = L.layerGroup();
+      capasLayer[key] = group;
+      
+      if (capa.features && capa.features.length > 0) {
+        renderizarCapa(key, capa, group);
+        if (capasActivas.has(key)) {
+          group.addTo(map);
         }
-      },
-      cutout: '55%'
+      }
     }
-  });
+    
+    configurarChartJS();
+    actualizarTodosLosIndicadores();
+    actualizarLeyendaCapas();
+    actualizarLeyendaAtributos();
+    actualizarInfoFiltro();
+    ajustarVistaMapa();
+    
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 300);
+  }
 
-  const ctxCobertura = document.getElementById('chartCobertura').getContext('2d');
-  charts['chartCobertura'] = new Chart(ctxCobertura, {
-    type: 'bar',
-    data: {
-      labels: ['0%', '1-20%', '21-40%', '41-60%', '61-80%', '81-100%'],
-      datasets: [{
-        label: 'Áreas',
-        data: [0, 0, 0, 0, 0, 0],
-        backgroundColor: ['#d6001c', '#a5d6a7', '#81c784', '#66bb6a', '#4caf50', '#2e7d32'],
-        borderRadius: 4,
-        maxBarThickness: 40
-      }]
-    },
-    options: {
-      animation: { duration: 280 },
-      plugins: { 
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: function(context) {
-              const total = context.dataset.data.reduce((a, b) => a + b, 0);
-              const pct = total > 0 ? Math.round((context.parsed.y / total) * 100) : 0;
-              return context.parsed.y + ' áreas (' + pct + '%)';
+  // ============================================================
+  //  RENDERIZAR CADA CAPA - CON ICONOS EN POPUPS
+  // ============================================================
+
+  function renderizarCapa(key, capa, group) {
+    const { features, config } = capa;
+    
+    // Mapeo de atributos a iconos y etiquetas amigables
+    const MAPA_ATRIBUTOS = {
+      'Juegos_inf': { icono: '🧩', label: 'Juegos infantiles' },
+      'Máquinas': { icono: '🏋️', label: 'Máquinas de ejercicio' },
+      'Accesibili': { icono: '♿', label: 'Accesibilidad universal' },
+      'Alumbrado': { icono: '💡', label: 'Alumbrado público' },
+      'Estacionam': { icono: '🅿️', label: 'Estacionamientos' },
+      'Mobiliario': { icono: '🪑', label: 'Mobiliario urbano' },
+      'Luminaria': { icono: '💡', label: 'Tipo de luminaria' },
+      'Cobertura': { icono: '🌳', label: 'Cobertura vegetal' },
+      'Cobertur_1': { icono: '🌳', label: 'Cobertura vegetal' },
+      'Cobertura_1': { icono: '🌳', label: 'Cobertura vegetal' },
+      'TIPO': { icono: '🏷️', label: 'Tipo' },
+      'USO': { icono: '🏷️', label: 'Uso' },
+      'Localizaci': { icono: '📍', label: 'Localización' },
+      'Observacio': { icono: '📝', label: 'Observaciones' },
+      'OBS': { icono: '📝', label: 'Observaciones' },
+      'Estado_del': { icono: '📊', label: 'Estado' },
+      'SUP_M2': { icono: '📐', label: 'Superficie (m²)' },
+      'NOMBRE': { icono: '🏷️', label: 'Nombre' },
+      'Nombre_1': { icono: '🏷️', label: 'Nombre' },
+      'DIRECCION': { icono: '📍', label: 'Dirección' }
+    };
+    
+    features.forEach(f => {
+      if (!hasValidCoordinates(f.geometry)) return;
+      
+      const layer = L.geoJSON(f, {
+        style: config.estilo,
+        onEachFeature: function(feat, layer) {
+          const props = feat.properties;
+          // Buscar nombre en múltiples campos
+          const nombre = props.NOMBRE || props.Nombre_1 || props.IDENTIFICA || props.nombre || 'Sin nombre';
+          const direccion = props.DIRECCION || props.Localizaci || '';
+          
+          let propRows = '';
+          const excludeKeys = [ 'DIRECCION', 'OBJECTID_1', 'Shape_Leng',  'IDENTIFICA', 'nombre', 'NOMBRE', 'geometry', 'OBJECTID', 'CDT', 'ZONA_PROP', 'ZONA_PRC', 'ID_TEMA', 'TEMA', 'SIT_IPT', 'SUB_TEMA', 'PLANO__VER', 'PRC_M23', 'N°', 'Marca_temp', 'Shape_Length', 'Shape_Area', 'FID', 'ESTADO', 'OBSERVACIO', 'SUP', 'DECRETO_N'];
+          
+          // Campos prioritarios en orden
+          const camposPrioritarios = ['Nombre_1', 'Localizaci', 'TIPO', 'USO', 'Juegos_inf', 'Máquinas', 'Accesibili', 'Alumbrado', 'Estacionam', 'Mobiliario', 'Luminaria', 'Cobertura', 'Cobertur_1', 'Cobertura_1', 'Observacio', 'OBS', 'Estado_del', 'SUP_M2'];
+          
+          camposPrioritarios.forEach(key => {
+            if (props[key] !== undefined && props[key] !== null && props[key] !== '' && props[key] !== ' ') {
+              const valor = props[key];
+              const info = MAPA_ATRIBUTOS[key] || { icono: '📌', label: key };
+              let display = valor;
+              
+              if (typeof valor === 'string') {
+                const lower = valor.toLowerCase();
+                if (lower === 'si' || lower === 'sí' || lower === 'true' || lower === '1' || lower === 'yes' || lower === 'x') {
+                  display = '✅ Sí';
+                } else if (lower === 'no' || lower === 'false' || lower === '0') {
+                  display = '❌ No';
+                } else if (lower === 'sin dato' || lower === '') {
+                  display = '—';
+                }
+              }
+              
+              if (key === 'Cobertura' || key === 'Cobertur_1' || key === 'Cobertura_1') {
+                const coberturaNum = parseCobertura(valor);
+                display = `${coberturaNum}%`;
+              }
+              
+              if (key === 'NOMBRE' && valor === ' ') return;
+              
+              propRows += `<div class="pop-row"><b>${info.icono} ${info.label}</b><span>${display}</span></div>`;
             }
+          });
+          
+          // Resto de propiedades
+          Object.entries(props)
+            .filter(([k]) => !excludeKeys.includes(k) && !camposPrioritarios.includes(k))
+            .filter(([k, v]) => v !== undefined && v !== null && v !== '' && v !== ' ')
+            .forEach(([k, v]) => {
+              const info = MAPA_ATRIBUTOS[k] || { icono: '📌', label: k };
+              let display = v;
+              if (typeof v === 'string') {
+                const lower = v.toLowerCase();
+                if (lower === 'si' || lower === 'sí' || lower === 'true' || lower === '1' || lower === 'yes' || lower === 'x') {
+                  display = '✅ Sí';
+                } else if (lower === 'no' || lower === 'false' || lower === '0') {
+                  display = '❌ No';
+                }
+              }
+              propRows += `<div class="pop-row"><b>${info.icono} ${info.label}</b><span>${display}</span></div>`;
+            });
+          
+          const titulo = nombre !== 'Sin nombre' ? `${config.icono} ${nombre}` : `${config.icono} ${config.nombre}`;
+          
+          layer.bindPopup(`
+            <div class="pop-title" style="color:${config.color}">${titulo}</div>
+                       <div class="pop-row"><b>📂 Capa</b><span>${config.nombre}</span></div>
+            ${propRows}
+          `);
+        }
+      });
+      
+      group.addLayer(layer);
+    });
+  }
+
+  // ============================================================
+  //  CONFIGURAR CHART.JS
+  // ============================================================
+
+  function configurarChartJS() {
+    Chart.defaults.font.family = "'Montserrat', sans-serif";
+    Chart.defaults.color = '#4a4b54';
+    Chart.defaults.font.size = 10;
+    Chart.defaults.font.weight = '400';
+
+    const chartConfig = {
+      type: 'bar',
+      options: {
+        animation: { duration: 280 },
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { 
+            grid: { color: '#e8eaf0' }, 
+            ticks: { color: '#4a4b54', font: { size: 9 } }, 
+            beginAtZero: true
+          },
+          x: { 
+            grid: { display: false }, 
+            ticks: { color: '#4a4b54', font: { size: 10, weight: '500' } } 
           }
         }
-      },
-      scales: {
-        y: { 
-          grid: { color: '#e8eaf0' }, 
-          ticks: { color: '#4a4b54', font: { size: 9 } }, 
-          beginAtZero: true
-        },
-        x: { 
-          grid: { display: false }, 
-          ticks: { color: '#4a4b54', font: { size: 9 } } 
-        }
       }
-    }
-  });
-}
+    };
 
-// ============================================================
-//  ACTUALIZAR INDICADORES
-// ============================================================
+    const campos = [
+      { id: 'chartJuegos', key: 'Juegos_inf', colorSi: '#2e7d32', colorNo: '#b0b5c7', statSi: 'statJuegosSi', statNo: 'statJuegosNo' },
+      { id: 'chartMaquinas', key: 'Máquinas', colorSi: '#d6001c', colorNo: '#b0b5c7', statSi: 'statMaquinasSi', statNo: 'statMaquinasNo' },
+      { id: 'chartAccesibilidad', key: 'Accesibili', colorSi: '#42a5f5', colorNo: '#b0b5c7', statSi: 'statAccesibilidadSi', statNo: 'statAccesibilidadNo' },
+      { id: 'chartAlumbrado', key: 'Alumbrado', colorSi: '#ff8f00', colorNo: '#b0b5c7', statSi: 'statAlumbradoSi', statNo: 'statAlumbradoNo' },
+      { id: 'chartEstacionamientos', key: 'Estacionam', colorSi: '#6a1b9a', colorNo: '#b0b5c7', statSi: 'statEstacionamientosSi', statNo: 'statEstacionamientosNo' },
+      { id: 'chartMobiliario', key: 'Mobiliario', colorSi: '#00838f', colorNo: '#b0b5c7', statSi: 'statMobiliarioSi', statNo: 'statMobiliarioNo' }
+    ];
 
-function actualizarTodosLosIndicadores() {
-  const allFeatures = getFeaturesFiltradas();
-  const total = allFeatures.length;
-  
-  const juegos = allFeatures.filter(f => parseSiNo(f.properties.Juegos_inf)).length;
-  const maquinas = allFeatures.filter(f => parseSiNo(f.properties.Máquinas)).length;
-  const accesibilidad = allFeatures.filter(f => parseSiNo(f.properties.Accesibili)).length;
-  const alumbrado = allFeatures.filter(f => parseSiNo(f.properties.Alumbrado)).length;
-  
-  const coberturas = allFeatures.map(f => {
-    const raw = f.properties.Cobertura || f.properties.Cobertur_1 || f.properties.Cobertura_1 || '';
-    return parseCobertura(raw);
-  }).filter(v => v > 0);
-  const coberturaPromedio = coberturas.length > 0 ? Math.round(coberturas.reduce((s, v) => s + v, 0) / coberturas.length) : 0;
-
-  document.getElementById('kpiTotal').textContent = fmt(total);
-  document.getElementById('kpiJuegos').textContent = fmt(juegos);
-  document.getElementById('kpiMaquinas').textContent = fmt(maquinas);
-  document.getElementById('kpiAccesibilidad').textContent = fmt(accesibilidad);
-  document.getElementById('kpiAlumbrado').textContent = fmt(alumbrado);
-  document.getElementById('kpiCobertura').textContent = coberturaPromedio + '%';
-  
-  const capasTexto = getNombreCapasActivas();
-  document.getElementById('kpiTotalSub').textContent = capasTexto;
-  
-  document.getElementById('footTotal').textContent = fmt(total) + ' elementos · ' + capasTexto;
-  document.getElementById('mapCount').textContent = fmt(total) + ' elementos';
-  document.getElementById('legendTotal').textContent = fmt(total);
-
-  document.getElementById('insightJuegos').textContent = fmt(juegos);
-  document.getElementById('insightJuegosPct').textContent = pct(juegos, total);
-  document.getElementById('insightMaquinas').textContent = fmt(maquinas);
-  document.getElementById('insightMaquinasPct').textContent = pct(maquinas, total);
-  document.getElementById('insightAccesibilidad').textContent = fmt(accesibilidad);
-  document.getElementById('insightAccesibilidadPct').textContent = pct(accesibilidad, total);
-  document.getElementById('insightAlumbrado').textContent = fmt(alumbrado);
-  document.getElementById('insightAlumbradoPct').textContent = pct(alumbrado, total);
-
-  actualizarGraficos(allFeatures);
-  actualizarInfoFiltro();
-}
-
-function actualizarGraficos(allFeatures) {
-  const total = allFeatures.length;
-  if (total === 0) {
-    const campos = ['statJuegosSi', 'statJuegosNo', 'statMaquinasSi', 'statMaquinasNo', 
-                    'statAccesibilidadSi', 'statAccesibilidadNo', 'statAlumbradoSi', 'statAlumbradoNo',
-                    'statEstacionamientosSi', 'statEstacionamientosNo', 'statMobiliarioSi', 'statMobiliarioNo'];
-    campos.forEach(id => document.getElementById(id).textContent = '0');
-    document.getElementById('statCoberturaPromedio').textContent = '0%';
-    document.getElementById('statCoberturaCero').textContent = '0';
-    document.getElementById('statCoberturaConDato').textContent = '0';
-    
-    const chartIds = ['chartJuegos', 'chartMaquinas', 'chartAccesibilidad', 'chartAlumbrado', 'chartEstacionamientos', 'chartMobiliario'];
-    chartIds.forEach(id => {
-      if (charts[id]) {
-        charts[id].data.datasets[0].data = [0, 0];
-        charts[id].update();
+    campos.forEach(campo => {
+      const canvas = document.getElementById(campo.id);
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        charts[campo.id] = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: ['✅ Sí', '❌ No'],
+            datasets: [{
+              data: [0, 0],
+              backgroundColor: [campo.colorSi, campo.colorNo],
+              borderRadius: 4,
+              maxBarThickness: 40
+            }]
+          },
+          options: chartConfig.options
+        });
       }
     });
+
+    const ctxLuminaria = document.getElementById('chartLuminaria').getContext('2d');
+    charts['chartLuminaria'] = new Chart(ctxLuminaria, {
+      type: 'doughnut',
+      data: {
+        labels: [],
+        datasets: [{
+          data: [],
+          backgroundColor: ['#2e7d32', '#d6001c', '#ff8f00', '#42a5f5', '#b0b5c7', '#6a1b9a', '#00838f'],
+          borderColor: '#ffffff',
+          borderWidth: 2
+        }]
+      },
+      options: {
+        animation: { duration: 280 },
+        plugins: {
+          legend: { 
+            position: 'bottom', 
+            labels: { color: '#4a4b54', font: { size: 9, weight: '400' }, padding: 6, boxWidth: 10 } 
+          }
+        },
+        cutout: '55%'
+      }
+    });
+
+    const ctxCobertura = document.getElementById('chartCobertura').getContext('2d');
+    charts['chartCobertura'] = new Chart(ctxCobertura, {
+      type: 'bar',
+      data: {
+        labels: ['0%', '1-20%', '21-40%', '41-60%', '61-80%', '81-100%'],
+        datasets: [{
+          label: 'Áreas',
+          data: [0, 0, 0, 0, 0, 0],
+          backgroundColor: ['#d6001c', '#a5d6a7', '#81c784', '#66bb6a', '#4caf50', '#2e7d32'],
+          borderRadius: 4,
+          maxBarThickness: 40
+        }]
+      },
+      options: {
+        animation: { duration: 280 },
+        plugins: { 
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                const pct = total > 0 ? Math.round((context.parsed.y / total) * 100) : 0;
+                return context.parsed.y + ' áreas (' + pct + '%)';
+              }
+            }
+          }
+        },
+        scales: {
+          y: { 
+            grid: { color: '#e8eaf0' }, 
+            ticks: { color: '#4a4b54', font: { size: 9 } }, 
+            beginAtZero: true
+          },
+          x: { 
+            grid: { display: false }, 
+            ticks: { color: '#4a4b54', font: { size: 9 } } 
+          }
+        }
+      }
+    });
+  }
+
+  // ============================================================
+  //  ACTUALIZAR INDICADORES
+  // ============================================================
+
+  function actualizarTodosLosIndicadores() {
+    const allFeatures = getFeaturesFiltradas();
+    const total = allFeatures.length;
+    
+    const juegos = allFeatures.filter(f => parseSiNo(f.properties.Juegos_inf)).length;
+    const maquinas = allFeatures.filter(f => parseSiNo(f.properties.Máquinas)).length;
+    const accesibilidad = allFeatures.filter(f => parseSiNo(f.properties.Accesibili)).length;
+    const alumbrado = allFeatures.filter(f => parseSiNo(f.properties.Alumbrado)).length;
+    
+    const coberturas = allFeatures.map(f => {
+      const raw = f.properties.Cobertura || f.properties.Cobertur_1 || f.properties.Cobertura_1 || '';
+      return parseCobertura(raw);
+    }).filter(v => v > 0);
+    const coberturaPromedio = coberturas.length > 0 ? Math.round(coberturas.reduce((s, v) => s + v, 0) / coberturas.length) : 0;
+
+    document.getElementById('kpiTotal').textContent = fmt(total);
+    document.getElementById('kpiJuegos').textContent = fmt(juegos);
+    document.getElementById('kpiMaquinas').textContent = fmt(maquinas);
+    document.getElementById('kpiAccesibilidad').textContent = fmt(accesibilidad);
+    document.getElementById('kpiAlumbrado').textContent = fmt(alumbrado);
+    document.getElementById('kpiCobertura').textContent = coberturaPromedio + '%';
+    
+    const capasTexto = getNombreCapasActivas();
+    document.getElementById('kpiTotalSub').textContent = capasTexto;
+    
+    document.getElementById('footTotal').textContent = fmt(total) + ' elementos · ' + capasTexto;
+    document.getElementById('mapCount').textContent = fmt(total) + ' elementos';
+    document.getElementById('legendTotal').textContent = fmt(total);
+
+    document.getElementById('insightJuegos').textContent = fmt(juegos);
+    document.getElementById('insightJuegosPct').textContent = pct(juegos, total);
+    document.getElementById('insightMaquinas').textContent = fmt(maquinas);
+    document.getElementById('insightMaquinasPct').textContent = pct(maquinas, total);
+    document.getElementById('insightAccesibilidad').textContent = fmt(accesibilidad);
+    document.getElementById('insightAccesibilidadPct').textContent = pct(accesibilidad, total);
+    document.getElementById('insightAlumbrado').textContent = fmt(alumbrado);
+    document.getElementById('insightAlumbradoPct').textContent = pct(alumbrado, total);
+
+    actualizarGraficos(allFeatures);
+    actualizarInfoFiltro();
+  }
+
+  function actualizarGraficos(allFeatures) {
+    const total = allFeatures.length;
+    if (total === 0) {
+      const campos = ['statJuegosSi', 'statJuegosNo', 'statMaquinasSi', 'statMaquinasNo', 
+                      'statAccesibilidadSi', 'statAccesibilidadNo', 'statAlumbradoSi', 'statAlumbradoNo',
+                      'statEstacionamientosSi', 'statEstacionamientosNo', 'statMobiliarioSi', 'statMobiliarioNo'];
+      campos.forEach(id => document.getElementById(id).textContent = '0');
+      document.getElementById('statCoberturaPromedio').textContent = '0%';
+      document.getElementById('statCoberturaCero').textContent = '0';
+      document.getElementById('statCoberturaConDato').textContent = '0';
+      
+      const chartIds = ['chartJuegos', 'chartMaquinas', 'chartAccesibilidad', 'chartAlumbrado', 'chartEstacionamientos', 'chartMobiliario'];
+      chartIds.forEach(id => {
+        if (charts[id]) {
+          charts[id].data.datasets[0].data = [0, 0];
+          charts[id].update();
+        }
+      });
+      if (charts['chartLuminaria']) {
+        charts['chartLuminaria'].data.labels = [];
+        charts['chartLuminaria'].data.datasets[0].data = [];
+        charts['chartLuminaria'].update();
+      }
+      if (charts['chartCobertura']) {
+        charts['chartCobertura'].data.datasets[0].data = [0, 0, 0, 0, 0, 0];
+        charts['chartCobertura'].update();
+      }
+      return;
+    }
+
+    const campos = [
+      { id: 'chartJuegos', key: 'Juegos_inf', statSi: 'statJuegosSi', statNo: 'statJuegosNo' },
+      { id: 'chartMaquinas', key: 'Máquinas', statSi: 'statMaquinasSi', statNo: 'statMaquinasNo' },
+      { id: 'chartAccesibilidad', key: 'Accesibili', statSi: 'statAccesibilidadSi', statNo: 'statAccesibilidadNo' },
+      { id: 'chartAlumbrado', key: 'Alumbrado', statSi: 'statAlumbradoSi', statNo: 'statAlumbradoNo' },
+      { id: 'chartEstacionamientos', key: 'Estacionam', statSi: 'statEstacionamientosSi', statNo: 'statEstacionamientosNo' },
+      { id: 'chartMobiliario', key: 'Mobiliario', statSi: 'statMobiliarioSi', statNo: 'statMobiliarioNo' }
+    ];
+
+    campos.forEach(campo => {
+      const si = allFeatures.filter(f => parseSiNo(f.properties[campo.key])).length;
+      const no = total - si;
+      
+      document.getElementById(campo.statSi).textContent = fmt(si);
+      document.getElementById(campo.statNo).textContent = fmt(no);
+      
+      if (charts[campo.id]) {
+        charts[campo.id].data.datasets[0].data = [si, no];
+        charts[campo.id].update();
+      }
+    });
+
+    const luminarias = {};
+    allFeatures.forEach(f => {
+      const key = f.properties.Luminaria || 'Sin dato';
+      luminarias[key] = (luminarias[key] || 0) + 1;
+    });
+    const labels = Object.keys(luminarias).sort();
+    const values = labels.map(k => luminarias[k]);
+    
     if (charts['chartLuminaria']) {
-      charts['chartLuminaria'].data.labels = [];
-      charts['chartLuminaria'].data.datasets[0].data = [];
+      charts['chartLuminaria'].data.labels = labels;
+      charts['chartLuminaria'].data.datasets[0].data = values;
       charts['chartLuminaria'].update();
     }
+
+    const rangos = [0, 0, 0, 0, 0, 0];
+    let coberturaSum = 0;
+    let coberturaCount = 0;
+    
+    allFeatures.forEach(f => {
+      const raw = f.properties.Cobertura || f.properties.Cobertur_1 || f.properties.Cobertura_1 || '';
+      const cobertura = parseCobertura(raw);
+      
+      if (cobertura === 0) {
+        rangos[0]++;
+      } else {
+        coberturaSum += cobertura;
+        coberturaCount++;
+        if (cobertura <= 20) rangos[1]++;
+        else if (cobertura <= 40) rangos[2]++;
+        else if (cobertura <= 60) rangos[3]++;
+        else if (cobertura <= 80) rangos[4]++;
+        else if (cobertura <= 100) rangos[5]++;
+      }
+    });
+    
+    const coberturaPromedio = coberturaCount > 0 ? Math.round(coberturaSum / coberturaCount) : 0;
+    document.getElementById('statCoberturaPromedio').textContent = coberturaPromedio + '%';
+    document.getElementById('statCoberturaCero').textContent = fmt(rangos[0]);
+    document.getElementById('statCoberturaConDato').textContent = fmt(coberturaCount);
+    
     if (charts['chartCobertura']) {
-      charts['chartCobertura'].data.datasets[0].data = [0, 0, 0, 0, 0, 0];
+      charts['chartCobertura'].data.datasets[0].data = rangos;
       charts['chartCobertura'].update();
     }
-    return;
   }
 
-  const campos = [
-    { id: 'chartJuegos', key: 'Juegos_inf', statSi: 'statJuegosSi', statNo: 'statJuegosNo' },
-    { id: 'chartMaquinas', key: 'Máquinas', statSi: 'statMaquinasSi', statNo: 'statMaquinasNo' },
-    { id: 'chartAccesibilidad', key: 'Accesibili', statSi: 'statAccesibilidadSi', statNo: 'statAccesibilidadNo' },
-    { id: 'chartAlumbrado', key: 'Alumbrado', statSi: 'statAlumbradoSi', statNo: 'statAlumbradoNo' },
-    { id: 'chartEstacionamientos', key: 'Estacionam', statSi: 'statEstacionamientosSi', statNo: 'statEstacionamientosNo' },
-    { id: 'chartMobiliario', key: 'Mobiliario', statSi: 'statMobiliarioSi', statNo: 'statMobiliarioNo' }
-  ];
+  // ============================================================
+  //  INFO DE FILTRO
+  // ============================================================
 
-  campos.forEach(campo => {
-    const si = allFeatures.filter(f => parseSiNo(f.properties[campo.key])).length;
-    const no = total - si;
+  function actualizarInfoFiltro() {
+    const container = document.getElementById('filtroInfo');
+    if (!container) return;
     
-    document.getElementById(campo.statSi).textContent = fmt(si);
-    document.getElementById(campo.statNo).textContent = fmt(no);
+    const activas = Array.from(capasActivas);
+    const totalCapas = Object.keys(capas).length;
     
-    if (charts[campo.id]) {
-      charts[campo.id].data.datasets[0].data = [si, no];
-      charts[campo.id].update();
+    if (activas.length === 0) {
+      container.innerHTML = '<span style="color:var(--color-text-secondary);font-size:12px;">⚠️ Ninguna capa activa</span>';
+      return;
     }
-  });
-
-  const luminarias = {};
-  allFeatures.forEach(f => {
-    const key = f.properties.Luminaria || 'Sin dato';
-    luminarias[key] = (luminarias[key] || 0) + 1;
-  });
-  const labels = Object.keys(luminarias).sort();
-  const values = labels.map(k => luminarias[k]);
-  
-  if (charts['chartLuminaria']) {
-    charts['chartLuminaria'].data.labels = labels;
-    charts['chartLuminaria'].data.datasets[0].data = values;
-    charts['chartLuminaria'].update();
+    
+    let html = '<span style="font-size:12px;color:var(--color-text-secondary);">Mostrando: </span>';
+    const nombres = activas.map(key => {
+      const capa = capas[key];
+      if (!capa) return key;
+      const color = capa.config.color;
+      return `<span style="display:inline-block;background:${color}20;color:${color};padding:2px 10px;border-radius:12px;font-weight:600;font-size:11px;margin:0 2px;">${capa.config.icono} ${capa.config.nombre}</span>`;
+    });
+    html += nombres.join(' ');
+    
+    if (activas.length < totalCapas) {
+      html += ` <span style="font-size:11px;color:var(--color-text-secondary);">(${activas.length}/${totalCapas} capas)</span>`;
+    }
+    
+    container.innerHTML = html;
   }
 
-  const rangos = [0, 0, 0, 0, 0, 0];
-  let coberturaSum = 0;
-  let coberturaCount = 0;
-  
-  allFeatures.forEach(f => {
-    const raw = f.properties.Cobertura || f.properties.Cobertur_1 || f.properties.Cobertura_1 || '';
-    const cobertura = parseCobertura(raw);
+  // ============================================================
+  //  LEYENDAS
+  // ============================================================
+
+  function actualizarLeyendaCapas() {
+    const container = document.getElementById('legendCapas');
+    if (!container) return;
     
-    if (cobertura === 0) {
-      rangos[0]++;
+    let html = `<div class="legend-label">🗺️ Capas</div>`;
+    
+    for (const [key, capa] of Object.entries(capas)) {
+      const config = capa.config;
+      const count = capa.features?.length || 0;
+      const isActive = capasActivas.has(key);
+      const hasData = count > 0;
+      
+      html += `
+        <div class="legend-item" style="display:flex;align-items:center;gap:8px;padding:3px 0;opacity:${hasData ? 1 : 0.4};">
+          <input type="checkbox" ${isActive ? 'checked' : ''} ${hasData ? '' : 'disabled'} 
+                data-capa="${key}" 
+                style="width:16px;height:16px;accent-color:${config.color};cursor:${hasData ? 'pointer' : 'default'};">
+          <span style="display:inline-block;width:14px;height:14px;border-radius:4px;background:${config.fillColor};border:2px solid ${config.color};flex-shrink:0;"></span>
+          <span style="flex:1;font-weight:500;">${config.icono} ${config.nombre}</span>
+          <span style="font-size:10px;color:#4a4b54;background:var(--color-container);padding:0 8px;border-radius:10px;">${count}</span>
+        </div>
+      `;
+    }
+    
+    container.innerHTML = html;
+    
+    container.querySelectorAll('input[type="checkbox"]:not([disabled])').forEach(checkbox => {
+      checkbox.addEventListener('change', function() {
+        const key = this.dataset.capa;
+        if (this.checked) {
+          capasActivas.add(key);
+          if (capasLayer[key]) {
+            map.addLayer(capasLayer[key]);
+          }
+        } else {
+          capasActivas.delete(key);
+          if (capasLayer[key]) {
+            map.removeLayer(capasLayer[key]);
+          }
+        }
+        actualizarTodosLosIndicadores();
+        actualizarLeyendaCapas();
+        actualizarInfoFiltro();
+      });
+    });
+  }
+
+  function actualizarLeyendaAtributos() {
+    const allFeatures = getFeaturesFiltradas();
+    
+    const luminarias = [...new Set(allFeatures.map(f => f.properties.Luminaria || 'Sin dato'))].filter(Boolean).sort();
+    const legendLum = document.getElementById('legendLuminaria');
+    if (luminarias.length > 0) {
+      legendLum.innerHTML = luminarias.map(l => `
+        <div class="legend-item">
+          <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${l.includes('LED') ? '#2e7d32' : l.includes('Convencional') ? '#d6001c' : l.includes('Fotovoltaica') ? '#ff8f00' : '#b0b5c7'};border:1px solid var(--color-border);"></span>
+          <span>${l}</span>
+        </div>
+      `).join('');
     } else {
-      coberturaSum += cobertura;
-      coberturaCount++;
-      if (cobertura <= 20) rangos[1]++;
-      else if (cobertura <= 40) rangos[2]++;
-      else if (cobertura <= 60) rangos[3]++;
-      else if (cobertura <= 80) rangos[4]++;
-      else if (cobertura <= 100) rangos[5]++;
+      legendLum.innerHTML = '<div class="legend-item"><span>Sin datos</span></div>';
     }
-  });
-  
-  const coberturaPromedio = coberturaCount > 0 ? Math.round(coberturaSum / coberturaCount) : 0;
-  document.getElementById('statCoberturaPromedio').textContent = coberturaPromedio + '%';
-  document.getElementById('statCoberturaCero').textContent = fmt(rangos[0]);
-  document.getElementById('statCoberturaConDato').textContent = fmt(coberturaCount);
-  
-  if (charts['chartCobertura']) {
-    charts['chartCobertura'].data.datasets[0].data = rangos;
-    charts['chartCobertura'].update();
-  }
-}
 
-// ============================================================
-//  INFO DE FILTRO
-// ============================================================
-
-function actualizarInfoFiltro() {
-  const container = document.getElementById('filtroInfo');
-  if (!container) return;
-  
-  const activas = Array.from(capasActivas);
-  const totalCapas = Object.keys(capas).length;
-  
-  if (activas.length === 0) {
-    container.innerHTML = '<span style="color:var(--color-text-secondary);font-size:12px;">⚠️ Ninguna capa activa</span>';
-    return;
-  }
-  
-  let html = '<span style="font-size:12px;color:var(--color-text-secondary);">Mostrando: </span>';
-  const nombres = activas.map(key => {
-    const capa = capas[key];
-    if (!capa) return key;
-    const color = capa.config.color;
-    return `<span style="display:inline-block;background:${color}20;color:${color};padding:2px 10px;border-radius:12px;font-weight:600;font-size:11px;margin:0 2px;">${capa.config.icono} ${capa.config.nombre}</span>`;
-  });
-  html += nombres.join(' ');
-  
-  if (activas.length < totalCapas) {
-    html += ` <span style="font-size:11px;color:var(--color-text-secondary);">(${activas.length}/${totalCapas} capas)</span>`;
-  }
-  
-  container.innerHTML = html;
-}
-
-// ============================================================
-//  LEYENDAS
-// ============================================================
-
-function actualizarLeyendaCapas() {
-  const container = document.getElementById('legendCapas');
-  if (!container) return;
-  
-  let html = `<div class="legend-label">🗺️ Capas</div>`;
-  
-  for (const [key, capa] of Object.entries(capas)) {
-    const config = capa.config;
-    const count = capa.features?.length || 0;
-    const isActive = capasActivas.has(key);
-    const hasData = count > 0;
+    const coberturas = allFeatures.map(f => {
+      const raw = f.properties.Cobertura || f.properties.Cobertur_1 || f.properties.Cobertura_1 || '';
+      return parseCobertura(raw);
+    });
     
-    html += `
-      <div class="legend-item" style="display:flex;align-items:center;gap:8px;padding:3px 0;opacity:${hasData ? 1 : 0.4};">
-        <input type="checkbox" ${isActive ? 'checked' : ''} ${hasData ? '' : 'disabled'} 
-               data-capa="${key}" 
-               style="width:16px;height:16px;accent-color:${config.color};cursor:${hasData ? 'pointer' : 'default'};">
-        <span style="display:inline-block;width:14px;height:14px;border-radius:4px;background:${config.fillColor};border:2px solid ${config.color};flex-shrink:0;"></span>
-        <span style="flex:1;font-weight:500;">${config.icono} ${config.nombre}</span>
-        <span style="font-size:10px;color:#4a4b54;background:var(--color-container);padding:0 8px;border-radius:10px;">${count}</span>
-      </div>
+    const avg = coberturas.filter(v => v > 0).length > 0 ? Math.round(coberturas.filter(v => v > 0).reduce((s, v) => s + v, 0) / coberturas.filter(v => v > 0).length) : 0;
+    const conDato = coberturas.filter(v => v > 0).length;
+    const cero = coberturas.filter(v => v === 0).length;
+    
+    document.getElementById('legendCobertura').innerHTML = `
+      <div class="legend-item"><span>📊 Promedio: <b style="color:var(--color-primary);">${avg}%</b></span></div>
+      <div class="legend-item"><span>🌿 Con cobertura: <b style="color:#2e7d32;">${conDato}</b></span></div>
+      <div class="legend-item"><span>⬜ Sin cobertura (0%): <b style="color:var(--color-primary);">${cero}</b></span></div>
+      <div style="width:100%;height:6px;background:linear-gradient(90deg,#d6001c,#a5d6a7,#4caf50,#2e7d32);border-radius:4px;margin-top:4px;"></div>
     `;
   }
-  
-  container.innerHTML = html;
-  
-  container.querySelectorAll('input[type="checkbox"]:not([disabled])').forEach(checkbox => {
-    checkbox.addEventListener('change', function() {
-      const key = this.dataset.capa;
-      if (this.checked) {
-        capasActivas.add(key);
-        if (capasLayer[key]) {
-          map.addLayer(capasLayer[key]);
-        }
-      } else {
-        capasActivas.delete(key);
-        if (capasLayer[key]) {
-          map.removeLayer(capasLayer[key]);
+
+  // ============================================================
+  //  AJUSTAR VISTA DEL MAPA
+  // ============================================================
+
+  function ajustarVistaMapa() {
+    try {
+      const allLayers = Object.values(capasLayer).filter(l => l.getLayers().length > 0);
+      if (allLayers.length > 0) {
+        const group = L.featureGroup(allLayers.flatMap(g => g.getLayers()));
+        const bounds = group.getBounds();
+        if (bounds.isValid()) {
+          map.fitBounds(bounds, { padding: [40, 40] });
+          return;
         }
       }
-      actualizarTodosLosIndicadores();
-      actualizarLeyendaCapas();
-      actualizarInfoFiltro();
-    });
-  });
-}
-
-function actualizarLeyendaAtributos() {
-  const allFeatures = getFeaturesFiltradas();
-  
-  const luminarias = [...new Set(allFeatures.map(f => f.properties.Luminaria || 'Sin dato'))].filter(Boolean).sort();
-  const legendLum = document.getElementById('legendLuminaria');
-  if (luminarias.length > 0) {
-    legendLum.innerHTML = luminarias.map(l => `
-      <div class="legend-item">
-        <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${l.includes('LED') ? '#2e7d32' : l.includes('Convencional') ? '#d6001c' : l.includes('Fotovoltaica') ? '#ff8f00' : '#b0b5c7'};border:1px solid var(--color-border);"></span>
-        <span>${l}</span>
-      </div>
-    `).join('');
-  } else {
-    legendLum.innerHTML = '<div class="legend-item"><span>Sin datos</span></div>';
+    } catch (e) {}
+    
+    map.setView([-34.17, -70.74], 13);
   }
 
-  const coberturas = allFeatures.map(f => {
-    const raw = f.properties.Cobertura || f.properties.Cobertur_1 || f.properties.Cobertura_1 || '';
-    return parseCobertura(raw);
-  });
-  
-  const avg = coberturas.filter(v => v > 0).length > 0 ? Math.round(coberturas.filter(v => v > 0).reduce((s, v) => s + v, 0) / coberturas.filter(v => v > 0).length) : 0;
-  const conDato = coberturas.filter(v => v > 0).length;
-  const cero = coberturas.filter(v => v === 0).length;
-  
-  document.getElementById('legendCobertura').innerHTML = `
-    <div class="legend-item"><span>📊 Promedio: <b style="color:var(--color-primary);">${avg}%</b></span></div>
-    <div class="legend-item"><span>🌿 Con cobertura: <b style="color:#2e7d32;">${conDato}</b></span></div>
-    <div class="legend-item"><span>⬜ Sin cobertura (0%): <b style="color:var(--color-primary);">${cero}</b></span></div>
-    <div style="width:100%;height:6px;background:linear-gradient(90deg,#d6001c,#a5d6a7,#4caf50,#2e7d32);border-radius:4px;margin-top:4px;"></div>
-  `;
-}
+  // ============================================================
+  //  INICIAR
+  // ============================================================
 
-// ============================================================
-//  AJUSTAR VISTA DEL MAPA
-// ============================================================
+  cargarTodasLasCapas();
+  </script>
 
-function ajustarVistaMapa() {
-  try {
-    const allLayers = Object.values(capasLayer).filter(l => l.getLayers().length > 0);
-    if (allLayers.length > 0) {
-      const group = L.featureGroup(allLayers.flatMap(g => g.getLayers()));
-      const bounds = group.getBounds();
-      if (bounds.isValid()) {
-        map.fitBounds(bounds, { padding: [40, 40] });
-        return;
-      }
-    }
-  } catch (e) {}
-  
-  map.setView([-34.17, -70.74], 13);
-}
-
-// ============================================================
-//  INICIAR
-// ============================================================
-
-cargarTodasLasCapas();
-</script>
-
-</body>
-</html>
+  </body>
+  </html>
