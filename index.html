@@ -589,7 +589,7 @@
       <p class="eyebrow">Catastro de áreas verdes · Rancagua</p>
       <h1>Áreas <em>Verdes</em> + <em style="color:#d6001c;">Parques</em></h1>
       <p class="subtitle">
-        Distribución de áreas verdes aprobadas en conjuntos habitacionales y parques urbnanos en la comuna de Rancagua.
+        Distribución de áreas verdes y parques en la comuna de Rancagua.
         <span id="filtroInfo" style="display:inline-block;margin-top:6px;"></span>
       </p>
     </header>
@@ -614,14 +614,14 @@
           <div id="map" class="leaflet-container"></div>
           
           <div class="legend-vertical" id="legend">
-            <div class="legend-title">🗺️ Capas</div>
+            <div class="legend-title">Capas</div>
             
             <div class="legend-section" id="legendCapas">
               <!-- Las capas se generan dinámicamente -->
             </div>
             
             <hr class="legend-divider">
-            
+            <div class="legend-title">Simbología</div>
             <div class="legend-section">
               <div class="legend-label">✅ Sí · ❌ No</div>
               <div class="legend-item"><span class="legend-icon">🧩</span> Juegos infantiles</div>
@@ -1127,6 +1127,42 @@
       
       L.control.layers(baseMaps, null, { position: 'topright', collapsed: false }).addTo(map);
     }
+    setTimeout(() => {
+  const controlContainer = document.querySelector('.leaflet-control-layers');
+  if (controlContainer) {
+    // Crear título
+    const title = document.createElement('div');
+    title.style.cssText = `
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #d6001c;
+      padding: 6px 12px 4px 12px;
+      border-bottom: 2px solid #d6001c;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: white;
+    `;
+    title.innerHTML = `Mapa Base`;
+    
+    // Insertar al inicio del control
+    controlContainer.insertBefore(title, controlContainer.firstChild);
+    
+    // Ajustar estilos del control
+    controlContainer.style.padding = '0';
+    controlContainer.style.borderRadius = '6px';
+    controlContainer.style.overflow = 'hidden';
+    
+    // Ajustar el contenido de las capas
+    const baseLayers = controlContainer.querySelector('.leaflet-control-layers-base');
+    if (baseLayers) {
+      baseLayers.style.padding = '4px 12px 8px 12px';
+    }
+  }
+}, 100);
     
     for (const [key, capa] of Object.entries(capas)) {
       const group = L.layerGroup();
@@ -1568,7 +1604,7 @@
     const container = document.getElementById('legendCapas');
     if (!container) return;
     
-    let html = `<div class="legend-label">🗺️ Capas</div>`;
+    let html = `<div class="legend-label">Tipolgoías</div>`;
     
     for (const [key, capa] of Object.entries(capas)) {
       const config = capa.config;
