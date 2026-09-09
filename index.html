@@ -746,7 +746,7 @@
             <p class="eyebrow">Catastro de áreas verdes · Rancagua</p>
             <h1>Áreas <em>Verdes</em> + <em style="color:#d6001c;">Parques</em></h1>
             <p class="subtitle">
-                Distribución de áreas verdes aprobadas en plano y parques materializados en la comuna de Rancagua.
+                Distribución de áreas verdes y parques en la comuna de Rancagua.
                 <span id="filtroInfo" style="display:inline-block;margin-top:6px;"></span>
             </p>
         </header>
@@ -995,6 +995,7 @@
                 color: '#d6001c',
                 fillColor: '#ff6b6b',
                 visible: true,
+                participaEnCalculos: true,
                 estilo: {
                     color: '#d6001c',
                     weight: 3,
@@ -1009,11 +1010,44 @@
                 color: '#4caf50',
                 fillColor: '#4caf50',
                 visible: true,
+                participaEnCalculos: true,
                 estilo: {
                     color: '#4caf50',
                     weight: 2,
                     opacity: 0.8,
                     fillOpacity: 0.4
+                }
+            },
+            'av_proyectadas': {
+                urls: ['data/AV_Proyectadas.json'],
+                nombre: 'AV Proyectadas',
+                icono: '🌱',
+                color: '#ff8f00',
+                fillColor: '#ffcc80',
+                visible: false,
+                participaEnCalculos: false,
+                estilo: {
+                    color: '#ff8f00',
+                    weight: 2,
+                    opacity: 0.7,
+                    fillOpacity: 0.35,
+                    dashArray: '5 5'
+                }
+            },
+            'parques_proyectados_2': {
+                urls: ['data/Parques_proyectados_2.json'],
+                nombre: 'Parques Proyectados 2',
+                icono: '🏗️',
+                color: '#6a1b9a',
+                fillColor: '#ce93d8',
+                visible: false,
+                participaEnCalculos: false,
+                estilo: {
+                    color: '#6a1b9a',
+                    weight: 2,
+                    opacity: 0.7,
+                    fillOpacity: 0.3,
+                    dashArray: '4 4'
                 }
             }
         };
@@ -1175,7 +1209,7 @@
         function getFeaturesFiltradas() {
             let all = [];
             for (const [key, capa] of Object.entries(capas)) {
-                if (capasActivas.has(key) && capa.features) {
+                if (capasActivas.has(key) && capa.features && capa.config.participaEnCalculos !== false) {
                     all = all.concat(capa.features);
                 }
             }
@@ -1196,121 +1230,111 @@
         //  DETECTAR CAMPOS EXISTENTES
         // ============================================================
 
-     // ============================================================
-//  DETECTAR CAMPOS EXISTENTES - CON NOMBRES PERSONALIZADOS
-// ============================================================
+        function detectarCampos() {
+            const allFeatures = getFeaturesFiltradas();
+            if (allFeatures.length === 0) return;
 
-function detectarCampos() {
-    const allFeatures = getFeaturesFiltradas();
-    if (allFeatures.length === 0) return;
+            const camposSet = new Set();
+            allFeatures.forEach(f => {
+                if (f.properties) {
+                    Object.keys(f.properties).forEach(k => camposSet.add(k));
+                }
+            });
 
-    const camposSet = new Set();
-    allFeatures.forEach(f => {
-        if (f.properties) {
-            Object.keys(f.properties).forEach(k => camposSet.add(k));
-        }
-    });
+            const campos = Array.from(camposSet).sort();
+            console.log('📋 Campos detectados en los datos:', campos);
 
-    const campos = Array.from(camposSet).sort();
-    console.log('📋 Campos detectados en los datos:', campos);
+            const mapeo = {
+                'Juegos_inf': {
+                    posibles: ['Juegos_inf', 'Juegos', 'JuegosInf', 'juegos_inf', 'juegos', 'Juego'],
+                    icono: '🧩',
+                    label: 'Juegos infantiles'
+                },
+                'Máquinas': {
+                    posibles: ['Máquinas', 'Maquinas', 'Maquinas_ej', 'maquinas', 'Ejercicio'],
+                    icono: '🏋️',
+                    label: 'Máquinas de ejercicio'
+                },
+                'Accesibili': {
+                    posibles: ['Accesibili', 'Accesibilidad', 'accesibili', 'Accesible'],
+                    icono: '♿',
+                    label: 'Accesibilidad'
+                },
+                'Alumbrado': {
+                    posibles: ['Alumbrado', 'alumbrado', 'Alumbrado_pub'],
+                    icono: '💡',
+                    label: 'Alumbrado público'
+                },
+                'Estacionam': {
+                    posibles: ['Estacionam', 'Estacionamientos', 'estacionam', 'Estacionamiento'],
+                    icono: '🅿️',
+                    label: 'Estacionamientos'
+                },
+                'Mobiliario': {
+                    posibles: ['Mobiliario', 'mobiliario', 'Mobiliario_urb'],
+                    icono: '🪑',
+                    label: 'Mobiliario urbano'
+                },
+                'Luminaria': {
+                    posibles: ['Luminaria', 'luminaria', 'TipoLuminaria'],
+                    icono: '💡',
+                    label: 'Tipo de luminaria'
+                },
+                'Cobertura': {
+                    posibles: ['Cobertura', 'Cobertur_1', 'Cobertura_1', 'cobertura', 'Cobertura_%'],
+                    icono: '🌳',
+                    label: 'Cobertura vegetal'
+                }
+            };
 
-    // ============================================================
-    //  AQUÍ CAMBIAS LOS NOMBRES QUE SE MUESTRAN EN EL SELECTOR
-    //  - key: nombre interno (no se cambia)
-    //  - label: lo que ves en el selector (cámbialo a tu gusto)
-    //  - icono: emoji que lo acompaña
-    // ============================================================
-    const mapeo = {
-        'Juegos_inf': { 
-            posibles: ['Juegos_inf', 'Juegos', 'JuegosInf', 'juegos_inf', 'juegos', 'Juego'], 
-            icono: '🧩', 
-            label: 'Juegos infantiles'  // ← Cambia aquí
-        },
-        'Máquinas': { 
-            posibles: ['Máquinas', 'Maquinas', 'Maquinas_ej', 'maquinas', 'Ejercicio'], 
-            icono: '🏋️', 
-            label: 'Máquinas de ejercicio'  // ← Cambia aquí
-        },
-        'Accesibili': { 
-            posibles: ['Accesibili', 'Accesibilidad', 'accesibili', 'Accesible'], 
-            icono: '♿', 
-            label: 'Accesibilidad'  // ← Cambia aquí
-        },
-        'Alumbrado': { 
-            posibles: ['Alumbrado', 'alumbrado', 'Alumbrado_pub'], 
-            icono: '💡', 
-            label: 'Alumbrado público'  // ← Cambia aquí
-        },
-        'Estacionam': { 
-            posibles: ['Estacionam', 'Estacionamientos', 'estacionam', 'Estacionamiento'], 
-            icono: '🅿️', 
-            label: 'Estacionamientos'  // ← Cambia aquí
-        },
-        'Mobiliario': { 
-            posibles: ['Mobiliario', 'mobiliario', 'Mobiliario_urb'], 
-            icono: '🪑', 
-            label: 'Mobiliario urbano'  // ← Cambia aquí
-        },
-        'Luminaria': { 
-            posibles: ['Luminaria', 'luminaria', 'TipoLuminaria'], 
-            icono: '💡', 
-            label: 'Tipo de luminaria'  // ← Cambia aquí
-        },
-        'Cobertura': { 
-            posibles: ['Cobertura', 'Cobertur_1', 'Cobertura_1', 'cobertura', 'Cobertura_%'], 
-            icono: '🌳', 
-            label: 'Cobertura vegetal'  // ← Cambia aquí
-        }
-    };
-
-    const selector = document.getElementById('heatmapAttr');
-    while (selector.options.length > 1) {
-        selector.remove(1);
-    }
-
-    let camposEncontrados = 0;
-
-    for (const [key, config] of Object.entries(mapeo)) {
-        let encontrado = null;
-        for (const posible of config.posibles) {
-            if (campos.includes(posible)) {
-                encontrado = posible;
-                break;
+            const selector = document.getElementById('heatmapAttr');
+            while (selector.options.length > 1) {
+                selector.remove(1);
             }
-            const found = campos.find(c => c.toLowerCase() === posible.toLowerCase());
-            if (found) {
-                encontrado = found;
-                break;
+
+            let camposEncontrados = 0;
+
+            for (const [key, config] of Object.entries(mapeo)) {
+                let encontrado = null;
+                for (const posible of config.posibles) {
+                    if (campos.includes(posible)) {
+                        encontrado = posible;
+                        break;
+                    }
+                    const found = campos.find(c => c.toLowerCase() === posible.toLowerCase());
+                    if (found) {
+                        encontrado = found;
+                        break;
+                    }
+                }
+
+                if (encontrado) {
+                    campoReal[key] = encontrado;
+                    const option = document.createElement('option');
+                    option.value = key;
+                    option.textContent = `${config.icono} ${config.label}`;
+                    selector.appendChild(option);
+                    camposEncontrados++;
+                    console.log(`✅ Campo "${key}" → "${encontrado}" (mostrado como "${config.label}")`);
+                } else {
+                    console.log(`❌ No se encontró campo para "${key}"`);
+                }
+            }
+
+            const optDensidad = document.createElement('option');
+            optDensidad.value = 'densidad';
+            optDensidad.textContent = '📊 Densidad de elementos';
+            selector.appendChild(optDensidad);
+
+            document.getElementById('heatmapDebug').textContent =
+                `🔍 ${camposEncontrados} campos encontrados (${campos.length} totales)`;
+
+            if (camposEncontrados === 0) {
+                document.getElementById('heatmapDebug').textContent =
+                    '⚠️ No se encontraron campos compatibles. Revisa la consola.';
             }
         }
 
-        if (encontrado) {
-            campoReal[key] = encontrado;
-            const option = document.createElement('option');
-            option.value = key;
-            option.textContent = `${config.icono} ${config.label}`;  // ← Esto es lo que se ve
-            selector.appendChild(option);
-            camposEncontrados++;
-            console.log(`✅ Campo "${key}" → "${encontrado}" (mostrado como "${config.label}")`);
-        } else {
-            console.log(`❌ No se encontró campo para "${key}"`);
-        }
-    }
-
-    // Opción de densidad
-    const optDensidad = document.createElement('option');
-    optDensidad.value = 'densidad';
-    optDensidad.textContent = '📊 Densidad de elementos';
-    selector.appendChild(optDensidad);
-
-    document.getElementById('heatmapDebug').textContent =
-        `🔍 ${camposEncontrados} campos encontrados (${campos.length} totales)`;
-
-    if (camposEncontrados === 0) {
-        document.getElementById('heatmapDebug').textContent =
-            '⚠️ No se encontraron campos compatibles. Revisa la consola.';
-    }
-}
         // ============================================================
         //  CARGA DE CAPAS
         // ============================================================
@@ -1383,7 +1407,8 @@ function detectarCampos() {
             } catch (err) {
                 console.error('Error al cargar capas:', err);
                 if (loadAttempts < MAX_LOAD_ATTEMPTS) {
-                    document.getElementById('loadMsg').innerHTML = `⚠️ Error. Reintentando (${loadAttempts}/${MAX_LOAD_ATTEMPTS})…`;
+                    document.getElementById('loadMsg').innerHTML =
+                    `⚠️ Error. Reintentando (${loadAttempts}/${MAX_LOAD_ATTEMPTS})…`;
                     setTimeout(() => cargarTodasLasCapas(), 2000);
                 } else {
                     document.getElementById('loadSpinner').style.display = 'none';
@@ -1442,6 +1467,7 @@ function detectarCampos() {
                                 icono: '📁',
                                 color: '#666',
                                 fillColor: '#999',
+                                participaEnCalculos: false,
                                 estilo: { color: '#666', weight: 2, opacity: 0.8, fillOpacity: 0.4 }
                             },
                             features: data.features || []
@@ -1453,22 +1479,22 @@ function detectarCampos() {
                     inicializarAppConCapas();
                 } catch (err) {
                     document.getElementById('loadErr').innerHTML = `
-              <div class="errbox">
-                <div style="font-weight:700;color:var(--color-primary);margin-bottom:6px;font-size:16px;">❌ Error</div>
-                El archivo no es un GeoJSON válido: ${err.message}
-                <button class="btn-retry" onclick="location.reload()">🔄 Reintentar</button>
-              </div>
-            `;
+                                <div class="errbox">
+                                    <div style="font-weight:700;color:var(--color-primary);margin-bottom:6px;font-size:16px;">❌ Error</div>
+                                    El archivo no es un GeoJSON válido: ${err.message}
+                                    <button class="btn-retry" onclick="location.reload()">🔄 Reintentar</button>
+                                </div>
+                            `;
                 }
             };
             reader.onerror = () => {
                 document.getElementById('loadErr').innerHTML = `
-              <div class="errbox">
-                <div style="font-weight:700;color:var(--color-primary);margin-bottom:6px;font-size:16px;">❌ Error</div>
-                No se pudo leer el archivo.
-                <button class="btn-retry" onclick="location.reload()">🔄 Reintentar</button>
-              </div>
-            `;
+                                <div class="errbox">
+                                    <div style="font-weight:700;color:var(--color-primary);margin-bottom:6px;font-size:16px;">❌ Error</div>
+                                    No se pudo leer el archivo.
+                                    <button class="btn-retry" onclick="location.reload()">🔄 Reintentar</button>
+                                </div>
+                            `;
             };
             reader.readAsText(file);
         }
@@ -1507,19 +1533,19 @@ function detectarCampos() {
                 if (controlContainer) {
                     const title = document.createElement('div');
                     title.style.cssText = `
-                font-size: 11px;
-                font-weight: 700;
-                text-transform: uppercase;
-                letter-spacing: 0.06em;
-                color: #d6001c;
-                padding: 6px 12px 4px 12px;
-                border-bottom: 2px solid #d6001c;
-                margin-bottom: 4px;
-                display: flex;
-                align-items: center;
-                gap: 6px;
-                background: white;
-              `;
+                                    font-size: 11px;
+                                    font-weight: 700;
+                                    text-transform: uppercase;
+                                    letter-spacing: 0.06em;
+                                    color: #d6001c;
+                                    padding: 6px 12px 4px 12px;
+                                    border-bottom: 2px solid #d6001c;
+                                    margin-bottom: 4px;
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 6px;
+                                    background: white;
+                                `;
                     title.innerHTML = `Mapa Base`;
                     controlContainer.insertBefore(title, controlContainer.firstChild);
                     controlContainer.style.padding = '0';
@@ -1624,7 +1650,7 @@ function detectarCampos() {
                         const excludeKeys = ['DIRECCION', 'OBJECTID_1', 'Shape_Leng', 'IDENTIFICA', 'nombre',
                             'NOMBRE', 'geometry', 'OBJECTID', 'CDT', 'ZONA_PROP', 'ZONA_PRC', 'ID_TEMA', 'TEMA',
                             'SIT_IPT', 'SUB_TEMA', 'PLANO__VER', 'PRC_M23', 'N°', 'Marca_temp', 'Shape_Length',
-                            'Shape_Area', 'FID', 'ESTADO', 'OBSERVACIO', 'SUP', 'DECRETO_N','OID_'
+                            'Shape_Area', 'FID', 'ESTADO', 'OBSERVACIO', 'SUP', 'DECRETO_N', 'OID_'
                         ];
 
                         const camposPrioritarios = ['Nombre_1', 'Localizaci', 'TIPO', 'USO', 'Juegos_inf',
@@ -1687,10 +1713,10 @@ function detectarCampos() {
                             `${config.icono} ${config.nombre}`;
 
                         layer.bindPopup(`
-                  <div class="pop-title" style="color:${config.color}">${titulo}</div>
-                  <div class="pop-row"><b>📂 Capa</b><span>${config.nombre}</span></div>
-                  ${propRows}
-                `);
+                                    <div class="pop-title" style="color:${config.color}">${titulo}</div>
+                                    <div class="pop-row"><b>📂 Capa</b><span>${config.nombre}</span></div>
+                                    ${propRows}
+                                `);
                     }
                 });
 
@@ -1735,7 +1761,9 @@ function detectarCampos() {
                 const nombreReal = campoReal[attr];
                 if (!nombreReal) {
                     document.getElementById('heatmapDebug').textContent = `❌ Campo "${attr}" no encontrado`;
-                    alert(`El campo "${attr}" no existe en los datos.\n\nCampos disponibles: ${Object.keys(campoReal).join(', ')}`);
+                    alert(
+                        `El campo "${attr}" no existe en los datos.\n\nCampos disponibles: ${Object.keys(campoReal).join(', ')}`
+                        );
                     return;
                 }
 
@@ -1761,7 +1789,8 @@ function detectarCampos() {
                         return;
                     }
 
-                    if (['Juegos_inf', 'Máquinas', 'Accesibili', 'Alumbrado', 'Estacionam', 'Mobiliario'].includes(attr)) {
+                    if (['Juegos_inf', 'Máquinas', 'Accesibili', 'Alumbrado', 'Estacionam', 'Mobiliario'].includes(
+                        attr)) {
                         const esSi = parseSiNo(valor);
                         if (esSi) {
                             peso = 1.0;
@@ -1858,27 +1887,27 @@ function detectarCampos() {
                 const nombreAmigable = nombresAtributos[attr] || attr;
 
                 legendInfo.innerHTML = `
-                    <div class="legend-label">🔥 Mapa de calor</div>
-                    <div style="font-size:11px;color:var(--color-text-secondary);">
-                      Atributo: <b style="color:var(--color-primary);">${nombreAmigable}</b>
-                    </div>
-                    <div style="font-size:10px;color:var(--color-text-secondary);">
-                      Campo real: "<b>${campoReal[attr] || attr}</b>"
-                    </div>
-                    <div style="font-size:10px;color:var(--color-text-secondary);">
-                      ${puntos.length} puntos válidos
-                    </div>
-                    <div style="font-size:10px;color:var(--color-text-secondary);">
-                      ${contadorSi} elementos con "Sí" o valor > 0
-                    </div>
-                    ${contadorInvalidos > 0 ? `<div style="font-size:9px;color:#d6001c;">⚠️ ${contadorInvalidos} elementos con geometría inválida</div>` : ''}
-                    <div style="width:100%;height:8px;border-radius:4px;background:linear-gradient(90deg,#2c7bb6,#abd9e9,#ffffbf,#fdae61,#d7191c);margin-top:4px;"></div>
-                    <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--color-text-secondary);margin-top:2px;">
-                      <span>Baja</span>
-                      <span>Media</span>
-                      <span>Alta</span>
-                    </div>
-                  `;
+                                <div class="legend-label">🔥 Mapa de calor</div>
+                                <div style="font-size:11px;color:var(--color-text-secondary);">
+                                  Atributo: <b style="color:var(--color-primary);">${nombreAmigable}</b>
+                                </div>
+                                <div style="font-size:10px;color:var(--color-text-secondary);">
+                                  Campo real: "<b>${campoReal[attr] || attr}</b>"
+                                </div>
+                                <div style="font-size:10px;color:var(--color-text-secondary);">
+                                  ${puntos.length} puntos válidos
+                                </div>
+                                <div style="font-size:10px;color:var(--color-text-secondary);">
+                                  ${contadorSi} elementos con "Sí" o valor > 0
+                                </div>
+                                ${contadorInvalidos > 0 ? `<div style="font-size:9px;color:#d6001c;">⚠️ ${contadorInvalidos} elementos con geometría inválida</div>` : ''}
+                                <div style="width:100%;height:8px;border-radius:4px;background:linear-gradient(90deg,#2c7bb6,#abd9e9,#ffffbf,#fdae61,#d7191c);margin-top:4px;"></div>
+                                <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--color-text-secondary);margin-top:2px;">
+                                  <span>Baja</span>
+                                  <span>Media</span>
+                                  <span>Alta</span>
+                                </div>
+                            `;
 
                 const oldLegend = document.getElementById('heatmapLegend');
                 if (oldLegend) oldLegend.remove();
@@ -1989,6 +2018,9 @@ function detectarCampos() {
                 }
             });
 
+            // ============================================================
+            //  GRÁFICO DE LUMINARIA CON PORCENTAJES
+            // ============================================================
             const ctxLuminaria = document.getElementById('chartLuminaria').getContext('2d');
             charts['chartLuminaria'] = new Chart(ctxLuminaria, {
                 type: 'doughnut',
@@ -2008,8 +2040,37 @@ function detectarCampos() {
                     plugins: {
                         legend: {
                             position: 'bottom',
-                            labels: { color: '#4a4b54', font: { size: 9, weight: '400' }, padding: 6,
-                                boxWidth: 10 }
+                            labels: {
+                                color: '#4a4b54',
+                                font: { size: 9, weight: '400' },
+                                padding: 6,
+                                boxWidth: 10,
+                                generateLabels: function(chart) {
+                                    const data = chart.data;
+                                    const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                    return data.labels.map((label, i) => {
+                                        const value = data.datasets[0].data[i];
+                                        const pct = total > 0 ? Math.round((value / total) * 100) : 0;
+                                        return {
+                                            text: `${label} (${pct}%)`,
+                                            fillStyle: data.datasets[0].backgroundColor[i],
+                                            strokeStyle: '#fff',
+                                            lineWidth: 2,
+                                            hidden: false,
+                                            index: i
+                                        };
+                                    });
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const pct = total > 0 ? Math.round((context.parsed / total) * 100) : 0;
+                                    return `${context.label}: ${context.parsed} (${pct}%)`;
+                                }
+                            }
                         }
                     },
                     cutout: '55%'
@@ -2113,6 +2174,10 @@ function detectarCampos() {
             actualizarInfoFiltro();
         }
 
+        // ============================================================
+        //  ACTUALIZAR GRÁFICOS (LUMINARIA CON PORCENTAJES)
+        // ============================================================
+
         function actualizarGraficos(allFeatures) {
             const total = allFeatures.length;
             if (total === 0) {
@@ -2178,6 +2243,7 @@ function detectarCampos() {
                 }
             });
 
+            // ===== LUMINARIA - CON PORCENTAJES =====
             const luminarias = {};
             allFeatures.forEach(f => {
                 const key = f.properties.Luminaria || 'Sin dato';
@@ -2192,6 +2258,7 @@ function detectarCampos() {
                 charts['chartLuminaria'].update();
             }
 
+            // ===== COBERTURA =====
             const rangos = [0, 0, 0, 0, 0, 0];
             let coberturaSum = 0;
             let coberturaCount = 0;
@@ -2276,15 +2343,15 @@ function detectarCampos() {
                 const hasData = count > 0;
 
                 html += `
-                  <div class="legend-item" style="display:flex;align-items:center;gap:8px;padding:3px 0;opacity:${hasData ? 1 : 0.4};">
-                    <input type="checkbox" ${isActive ? 'checked' : ''} ${hasData ? '' : 'disabled'} 
-                           data-capa="${key}" 
-                           style="width:16px;height:16px;accent-color:${config.color};cursor:${hasData ? 'pointer' : 'default'};">
-                    <span style="display:inline-block;width:14px;height:14px;border-radius:4px;background:${config.fillColor};border:2px solid ${config.color};flex-shrink:0;"></span>
-                    <span style="flex:1;font-weight:500;">${config.icono} ${config.nombre}</span>
-                    <span style="font-size:10px;color:#4a4b54;background:var(--color-container);padding:0 8px;border-radius:10px;">${count}</span>
-                  </div>
-                `;
+                            <div class="legend-item" style="display:flex;align-items:center;gap:8px;padding:3px 0;opacity:${hasData ? 1 : 0.4};">
+                                <input type="checkbox" ${isActive ? 'checked' : ''} ${hasData ? '' : 'disabled'} 
+                                       data-capa="${key}" 
+                                       style="width:16px;height:16px;accent-color:${config.color};cursor:${hasData ? 'pointer' : 'default'};">
+                                <span style="display:inline-block;width:14px;height:14px;border-radius:4px;background:${config.fillColor};border:2px solid ${config.color};flex-shrink:0;"></span>
+                                <span style="flex:1;font-weight:500;">${config.icono} ${config.nombre}</span>
+                                <span style="font-size:10px;color:#4a4b54;background:var(--color-container);padding:0 8px;border-radius:10px;">${count}</span>
+                            </div>
+                        `;
             }
 
             container.innerHTML = html;
@@ -2323,11 +2390,11 @@ function detectarCampos() {
             const legendLum = document.getElementById('legendLuminaria');
             if (luminarias.length > 0) {
                 legendLum.innerHTML = luminarias.map(l => `
-                    <div class="legend-item">
-                      <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${l.includes('LED') ? '#2e7d32' : l.includes('Convencional') ? '#d6001c' : l.includes('Fotovoltaica') ? '#ff8f00' : '#b0b5c7'};border:1px solid var(--color-border);"></span>
-                      <span>${l}</span>
-                    </div>
-                  `).join('');
+                            <div class="legend-item">
+                              <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${l.includes('LED') ? '#2e7d32' : l.includes('Convencional') ? '#d6001c' : l.includes('Fotovoltaica') ? '#ff8f00' : '#b0b5c7'};border:1px solid var(--color-border);"></span>
+                              <span>${l}</span>
+                            </div>
+                        `).join('');
             } else {
                 legendLum.innerHTML = '<div class="legend-item"><span>Sin datos</span></div>';
             }
@@ -2344,11 +2411,11 @@ function detectarCampos() {
             const cero = coberturas.filter(v => v === 0).length;
 
             document.getElementById('legendCobertura').innerHTML = `
-                <div class="legend-item"><span>📊 Promedio: <b style="color:var(--color-primary);">${avg}%</b></span></div>
-                <div class="legend-item"><span>🌿 Con cobertura: <b style="color:#2e7d32;">${conDato}</b></span></div>
-                <div class="legend-item"><span>⬜ Sin cobertura (0%): <b style="color:var(--color-primary);">${cero}</b></span></div>
-                <div style="width:100%;height:6px;background:linear-gradient(90deg,#d6001c,#a5d6a7,#4caf50,#2e7d32);border-radius:4px;margin-top:4px;"></div>
-              `;
+                        <div class="legend-item"><span>📊 Promedio: <b style="color:var(--color-primary);">${avg}%</b></span></div>
+                        <div class="legend-item"><span>🌿 Con cobertura: <b style="color:#2e7d32;">${conDato}</b></span></div>
+                        <div class="legend-item"><span>⬜ Sin cobertura (0%): <b style="color:var(--color-primary);">${cero}</b></span></div>
+                        <div style="width:100%;height:6px;background:linear-gradient(90deg,#d6001c,#a5d6a7,#4caf50,#2e7d32);border-radius:4px;margin-top:4px;"></div>
+                    `;
         }
 
         // ============================================================
